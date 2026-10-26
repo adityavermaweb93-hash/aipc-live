@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Pastor Joshua Rao",
+    "email": "joshua.rao@hydcovenant.org",
+    "phone": "+91 98480 99887",
+    "message": "Can I arrange for airport pickup at Mumbai T2 for an elderly senior pastor in our team?",
+    "id": "QRY-2026-005",
+    "createdAt": "2026-10-26T06:17:33.878Z",
+    "status": "replied",
+    "replyNotes": "Advised prepaid cab counter at T2 arrivals directly to GCC Hotel.",
+    "repliedBy": "AIPC Secretariat",
+    "repliedAt": "2026-10-26T06:17:33.882Z"
+  },
+  {
+    "id": "QRY-2026-001",
+    "createdAt": "2026-10-23T06:16:39.813Z",
+    "name": "Anand Varghese",
+    "email": "anand.varghese@keralachurch.org",
+    "phone": "+91 94471 22334",
+    "message": "Greetings in Christ! My train arrives at Borivali early around 10:30 AM on Sep 29. Can I complete early registration and wait in the hotel lobby before the 12:00 noon check-in?",
+    "status": "pending",
+    "replyNotes": ""
+  },
+  {
+    "id": "QRY-2026-002",
+    "createdAt": "2026-10-24T06:16:39.813Z",
+    "name": "Kiran Das",
+    "email": "kiran.das@calcuttafellowship.in",
+    "phone": "+91 98300 55667",
+    "message": "Hello, our church in Kolkata has two young evangelists who want to attend. They understand English well but speak moderately. Are they eligible to attend?",
+    "status": "replied",
+    "replyNotes": "Replied via email explaining that all expositions and panels are conducted in English, and comfortable comprehension is sufficient.",
+    "repliedAt": "2026-10-25T06:16:39.813Z",
+    "repliedBy": "AIPC Secretariat"
+  },
+  {
+    "id": "QRY-2026-003",
+    "createdAt": "2026-10-25T12:16:39.813Z",
+    "name": "George Thomas",
+    "email": "george.thomas@gracehyd.org",
+    "phone": "+91 98490 88776",
+    "message": "We are a delegation of 4 pastors coming from Hyderabad. Can we request to be placed together in the Quadruple Sharing room?",
+    "status": "pending",
+    "replyNotes": ""
+  },
+  {
+    "id": "QRY-2026-004",
+    "createdAt": "2026-10-26T00:16:39.813Z",
+    "name": "Manoj Sharma",
+    "email": "m.sharma@delhicovenant.org",
+    "phone": "+91 98100 44332",
+    "message": "Regarding the free book packages: are they provided physically at the conference registration counter? What is the weight so we can plan luggage accordingly?",
+    "status": "replied",
+    "replyNotes": "Replied via WhatsApp: physical book parcel approx 3.5kg given during registration packet pickup.",
+    "repliedAt": "2026-10-26T04:16:39.813Z",
+    "repliedBy": "AIPC Secretariat"
+  }
+]

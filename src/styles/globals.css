@@ -1,0 +1,200 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary-red: #cc0000;
+  --brand-maroon: #801b0d;
+  --countdown-bg: #7F0401;
+  --primary-red-hover: #ff0000;
+  --bg-dark: #0a0a0a;
+  --text-main: #ffffff;
+  --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: #FAFBFC;
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #7F0401;
+}
+
+/* Floating SNav Styles */
+.snav-btn {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 99999;
+  background: #7F0401;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 10px;
+  border-radius: 10px 0 0 10px;
+  box-shadow: -2px 0 14px rgba(127,4,1,0.4);
+  transition: background 0.3s ease;
+}
+.snav-btn:hover {
+  background: #9e0502;
+}
+.snav-icon {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+.snav-icon span {
+  display: block;
+  width: 14px;
+  height: 2px;
+  background: #fff;
+  border-radius: 1px;
+}
+.snav-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+.snav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 99997;
+}
+.snav-modal {
+  position: fixed;
+  right: 48px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 99998;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  width: 260px;
+  padding: 8px 0;
+}
+.snav-modal::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 8px 0 8px 9px;
+  border-style: solid;
+  border-color: transparent transparent transparent #fff;
+}
+.snav-modal-head {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(127,4,1,0.1);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.snav-modal-head span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #7F0401;
+  font-family: 'DM Sans', sans-serif;
+}
+.snav-register-btn {
+  display: inline-block;
+  background: #7F0401;
+  color: #fff !important;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-family: 'DM Sans', sans-serif;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-decoration: none !important;
+  white-space: nowrap;
+  line-height: 1.4;
+  transition: all 0.2s;
+}
+.snav-register-btn:hover {
+  background: #9e0502;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(127,4,1,0.2);
+}
+.snav-modal ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.snav-modal ul li {
+  border-bottom: 1px solid #f5f0f0;
+}
+.snav-modal ul li:last-child {
+  border-bottom: none;
+}
+.snav-modal ul li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: #444;
+  text-decoration: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.snav-modal ul li a:hover {
+  color: #7F0401;
+  background: rgba(127,4,1,0.02);
+  padding-left: 22px;
+}
+
+@media (max-width:1024px) {
+  .snav-btn {
+    top: 20px;
+    transform: none;
+    border-radius: 10px 0 0 10px;
+  }
+  .snav-modal {
+    right: auto;
+    top: auto;
+    transform: none;
+    width: 85vw;
+    max-width: 320px;
+    border-radius: 16px;
+  }
+  .snav-modal::after {
+    display: none;
+  }
+}
