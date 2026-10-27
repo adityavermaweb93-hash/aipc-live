@@ -16,31 +16,6 @@ export default function Document() {
           href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
         />
 
-        {/* Fallback Tailwind standalone runtime: guarantees styles never break even across redeployments or cache clears */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.tailwind = {
-                theme: {
-                  extend: {
-                    colors: {
-                      'primary-red': '#cc0000',
-                      'brand-maroon': '#801b0d',
-                      'countdown-bg': '#7F0401',
-                    },
-                    fontFamily: {
-                      sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-                      bebas: ['"Bebas Neue"', 'Impact', 'sans-serif'],
-                      playfair: ['"Playfair Display"', 'Georgia', 'serif'],
-                    }
-                  }
-                }
-              };
-            `,
-          }}
-        />
-        <script src="https://cdn.tailwindcss.com"></script>
-
         {/* Inline Critical CSS: Immune to caching issues, CDN outages, or server restarts */}
         <style
           dangerouslySetInnerHTML={{
