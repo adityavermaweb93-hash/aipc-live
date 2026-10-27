@@ -1,5 +1,7 @@
 # All India Pastors’ Conference (AIPC) Web Portal
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fadityavermaweb93-hash%2Faipc-live)
+
 An exact, high-fidelity visual reproduction and dynamic operations platform for the **All India Pastors’ Conference** (https://aipc.live/).
 
 Powered by **React**, **Next.js**, **TypeScript**, and **Tailwind CSS**, featuring an edge-to-edge **WordPress-styled Admin Dashboard** (`/admin`) for annual edition transitions, attendee registrations, and visitor inquiry response workflows.
