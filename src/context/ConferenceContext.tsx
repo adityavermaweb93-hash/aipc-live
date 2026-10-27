@@ -24,7 +24,9 @@ export function ConferenceProvider({
 
   const refresh = async () => {
     try {
-      const res = await fetch('/api/conference');
+      const res = await fetch('/api/conference?t=' + Date.now(), {
+        cache: 'no-store',
+      });
       const json = await res.json();
       if (json.success && json.data) {
         setData(json.data);
@@ -37,9 +39,23 @@ export function ConferenceProvider({
   useEffect(() => {
     if (initialData) {
       setData(initialData);
-    } else {
-      refresh();
     }
+    // Always refresh latest data on client mount
+    refresh();
+
+    // Auto-refresh when returning to this tab after updating in /admin
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refresh();
+      }
+    };
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', refresh);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', refresh);
+    };
   }, [initialData]);
 
   return (

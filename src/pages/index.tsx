@@ -83,7 +83,8 @@ export default function Home() {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   const data = getConferenceData();
   return {
     props: {

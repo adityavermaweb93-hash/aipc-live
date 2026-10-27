@@ -1,8 +1,8 @@
 {
   "meta": {
-    "year": "2027",
-    "dates": "March 21, 2027",
-    "targetDate": "March 21, 2027 12:00:00",
+    "year": "2030",
+    "dates": "Dates to be announced, 2030",
+    "targetDate": "October 01, 2030 12:00:00",
     "venueShort": "Mumbai Convention Centre, Mumbai",
     "forText": "Men who love the Church",
     "englishDisclaimer": "*THE ALL INDIA PASTORS’ CONFERENCE IS AN ENGLISH CONFERENCE, \nSO PLEASE PLAN TO REGISTER AND ATTEND ONLY IF YOU ARE WELL-VERSED IN ENGLISH."
@@ -79,17 +79,17 @@
   "hero": {
     "preTitle": "Organised By Equip Indian Churches",
     "mainHeading1": "AIPC",
-    "mainHeading2": "2027",
+    "mainHeading2": "2030",
     "subtitlePre": "“Living as ",
     "subtitleHighlight": "love ",
     "subtitlePost": "”",
-    "description": "Expositions in 1 john",
-    "tagline": "A Conference for Indian Churches by Indians (2027).",
+    "description": "kjbkjhkjhkj",
+    "tagline": "A Conference for Indian Churches by Indians (2030).",
     "registerBtnText": "Register Now",
     "registerBtnUrl": "/registration-2026",
     "learnMoreBtnText": "Learn More",
     "learnMoreBtnUrl": "#theme",
-    "bgImage": "/assets/DSCF0834-scaled.jpg"
+    "bgImage": "/uploads/1793081289643_Screenshot_2026-10-26_at_1_35_48_PM.png"
   },
   "about": {
     "preTitle": "A Conference for Indian Churches by Indians",
@@ -122,7 +122,7 @@
     ]
   },
   "theme": {
-    "preTitle": "Conference Theme 2027",
+    "preTitle": "Conference Theme 2030",
     "mainHeadingPre": "“Living as ",
     "mainHeadingSpan": "Exiles",
     "mainHeadingPost": "”",
@@ -325,6 +325,8 @@
     "titlePre": "Free ",
     "titleItalic": "Books",
     "years": [
+      "2030",
+      "2028",
       "2027",
       "2026",
       "2024",
@@ -490,7 +492,9 @@
           "img": "/assets/nicene-creed.jpeg"
         }
       ],
-      "2027": []
+      "2027": [],
+      "2028": [],
+      "2030": []
     }
   },
   "organisers": {

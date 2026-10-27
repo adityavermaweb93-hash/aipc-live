@@ -178,7 +178,6 @@ try {
  * Get all registrations from disk or memory
  */
 export function getRegistrations(): RegistrationRecord[] {
-  if (inMemoryRegistrations) return inMemoryRegistrations;
   try {
     if (fs.existsSync(REGISTRATIONS_FILE)) {
       const content = fs.readFileSync(REGISTRATIONS_FILE, 'utf-8');
@@ -188,6 +187,7 @@ export function getRegistrations(): RegistrationRecord[] {
   } catch (err) {
     console.error('Error reading registrations.json:', err);
   }
+  if (inMemoryRegistrations) return inMemoryRegistrations;
   return INITIAL_REGISTRATIONS;
 }
 

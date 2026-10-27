@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getConferenceData, saveConferenceData } from '@/lib/conferenceStore';
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+
   if (req.method === 'GET') {
     const data = getConferenceData();
     return res.status(200).json({ success: true, data });

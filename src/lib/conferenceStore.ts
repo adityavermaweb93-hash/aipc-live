@@ -30,7 +30,6 @@ try {
  * Get current conference data from disk, or fallback to defaults
  */
 export function getConferenceData() {
-  if (inMemoryData) return inMemoryData;
   try {
     if (fs.existsSync(DATA_FILE)) {
       const content = fs.readFileSync(DATA_FILE, 'utf-8');
@@ -40,6 +39,7 @@ export function getConferenceData() {
   } catch (err) {
     console.error('Error reading conference.json:', err);
   }
+  if (inMemoryData) return inMemoryData;
   return defaultData;
 }
 

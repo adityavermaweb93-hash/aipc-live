@@ -89,7 +89,6 @@ try {
  * Get all contact queries
  */
 export function getQueries(): ContactQuery[] {
-  if (inMemoryQueries) return inMemoryQueries;
   try {
     if (fs.existsSync(QUERIES_FILE)) {
       const content = fs.readFileSync(QUERIES_FILE, 'utf-8');
@@ -99,6 +98,7 @@ export function getQueries(): ContactQuery[] {
   } catch (err) {
     console.error('Error reading queries.json:', err);
   }
+  if (inMemoryQueries) return inMemoryQueries;
   return INITIAL_QUERIES;
 }
 
