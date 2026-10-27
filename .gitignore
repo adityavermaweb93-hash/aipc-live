@@ -25,6 +25,7 @@ yarn-error.log*
 # Environment & Vercel
 .env*.local
 .vercel
+.git_ssh
 
 # OS metadata
 .DS_Store
