@@ -16,6 +16,7 @@ export interface ContactQuery {
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const QUERIES_FILE = path.join(DATA_DIR, 'queries.json');
+const TMP_QUERIES_FILE = path.join('/tmp', 'queries.json');
 
 const INITIAL_QUERIES: ContactQuery[] = [
   {
@@ -86,9 +87,24 @@ try {
 }
 
 /**
- * Get all contact queries
+ * Get all contact queries from memory, /tmp, disk or fallback
  */
 export function getQueries(): ContactQuery[] {
+  // 1. Prioritize active in-memory queries
+  if (inMemoryQueries) return inMemoryQueries;
+
+  // 2. Check /tmp
+  try {
+    if (fs.existsSync(TMP_QUERIES_FILE)) {
+      const content = fs.readFileSync(TMP_QUERIES_FILE, 'utf-8');
+      inMemoryQueries = JSON.parse(content);
+      return inMemoryQueries;
+    }
+  } catch (err) {
+    console.error('Error reading /tmp/queries.json:', err);
+  }
+
+  // 3. Check bundled project data
   try {
     if (fs.existsSync(QUERIES_FILE)) {
       const content = fs.readFileSync(QUERIES_FILE, 'utf-8');
@@ -98,22 +114,30 @@ export function getQueries(): ContactQuery[] {
   } catch (err) {
     console.error('Error reading queries.json:', err);
   }
-  if (inMemoryQueries) return inMemoryQueries;
+
   return INITIAL_QUERIES;
 }
 
 /**
- * Save queries atomically to disk
+ * Save queries atomically to memory, /tmp, and disk
  */
 export function saveQueries(records: ContactQuery[]): { success: boolean; error?: string } {
   inMemoryQueries = records;
+
+  // 1. Write to /tmp for serverless runtime persistence
+  try {
+    fs.writeFileSync(TMP_QUERIES_FILE, JSON.stringify(records, null, 2), 'utf-8');
+  } catch (err: any) {
+    // /tmp write notice
+  }
+
+  // 2. Write to local project directory
   try {
     const tempFile = `${QUERIES_FILE}.tmp`;
     fs.writeFileSync(tempFile, JSON.stringify(records, null, 2), 'utf-8');
     fs.renameSync(tempFile, QUERIES_FILE);
     return { success: true };
   } catch (err: any) {
-    console.warn('Filesystem write notice (expected in read-only serverless):', err.message);
     return { success: true };
   }
 }

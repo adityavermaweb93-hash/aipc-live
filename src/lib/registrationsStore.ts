@@ -29,6 +29,7 @@ export interface RegistrationRecord {
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REGISTRATIONS_FILE = path.join(DATA_DIR, 'registrations.json');
+const TMP_REGISTRATIONS_FILE = path.join('/tmp', 'registrations.json');
 
 const INITIAL_REGISTRATIONS: RegistrationRecord[] = [
   {
@@ -175,9 +176,24 @@ try {
 }
 
 /**
- * Get all registrations from disk or memory
+ * Get all registrations from memory, /tmp, disk or fallback
  */
 export function getRegistrations(): RegistrationRecord[] {
+  // 1. Prioritize active in-memory registrations
+  if (inMemoryRegistrations) return inMemoryRegistrations;
+
+  // 2. Check /tmp
+  try {
+    if (fs.existsSync(TMP_REGISTRATIONS_FILE)) {
+      const content = fs.readFileSync(TMP_REGISTRATIONS_FILE, 'utf-8');
+      inMemoryRegistrations = JSON.parse(content);
+      return inMemoryRegistrations;
+    }
+  } catch (err) {
+    console.error('Error reading /tmp/registrations.json:', err);
+  }
+
+  // 3. Check bundled project data
   try {
     if (fs.existsSync(REGISTRATIONS_FILE)) {
       const content = fs.readFileSync(REGISTRATIONS_FILE, 'utf-8');
@@ -187,22 +203,30 @@ export function getRegistrations(): RegistrationRecord[] {
   } catch (err) {
     console.error('Error reading registrations.json:', err);
   }
-  if (inMemoryRegistrations) return inMemoryRegistrations;
+
   return INITIAL_REGISTRATIONS;
 }
 
 /**
- * Save registrations atomically to disk or memory
+ * Save registrations atomically to memory, /tmp, and disk
  */
 export function saveRegistrations(records: RegistrationRecord[]): { success: boolean; error?: string } {
   inMemoryRegistrations = records;
+
+  // 1. Write to /tmp for serverless runtime persistence
+  try {
+    fs.writeFileSync(TMP_REGISTRATIONS_FILE, JSON.stringify(records, null, 2), 'utf-8');
+  } catch (err: any) {
+    // /tmp write notice
+  }
+
+  // 2. Write to local project directory
   try {
     const tempFile = `${REGISTRATIONS_FILE}.tmp`;
     fs.writeFileSync(tempFile, JSON.stringify(records, null, 2), 'utf-8');
     fs.renameSync(tempFile, REGISTRATIONS_FILE);
     return { success: true };
   } catch (err: any) {
-    console.warn('Filesystem write notice (expected in read-only serverless):', err.message);
     return { success: true };
   }
 }
