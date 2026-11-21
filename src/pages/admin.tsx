@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import type { GetServerSideProps } from 'next';
 import { getConferenceData } from '@/lib/conferenceStore';
-import { getRegistrations, RegistrationRecord } from '@/lib/registrationsStore';
-import { getQueries, ContactQuery } from '@/lib/queriesStore';
+import { getRegistrationsAsync, RegistrationRecord } from '@/lib/registrationsStore';
+import { getQueriesAsync, ContactQuery } from '@/lib/queriesStore';
 import { useConferenceContext } from '@/context/ConferenceContext';
 import HeaderTab from '@/components/admin/HeaderTab';
 import AboutTab from '@/components/admin/AboutTab';
@@ -98,6 +98,50 @@ export default function AdminDashboard({
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [uploadedMedia, setUploadedMedia] = useState<{ name: string; url: string; time: string }[]>([]);
+
+  // Fetch fresh data from live backend store on mount and window focus
+  useEffect(() => {
+    const fetchFreshData = async () => {
+      try {
+        const res = await fetch('/api/conference?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setData(json.data);
+          setJsonText(JSON.stringify(json.data, null, 2));
+          setGlobalData(json.data);
+        }
+      } catch (e) {}
+
+      try {
+        const regRes = await fetch('/api/registrations?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        const regJson = await regRes.json();
+        if (regJson.success && Array.isArray(regJson.registrations)) {
+          setRegistrations(regJson.registrations);
+        }
+      } catch (e) {}
+
+      try {
+        const qRes = await fetch('/api/queries?t=' + Date.now(), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' },
+        });
+        const qJson = await qRes.json();
+        if (qJson.success && Array.isArray(qJson.queries)) {
+          setQueries(qJson.queries);
+        }
+      } catch (e) {}
+    };
+
+    fetchFreshData();
+    window.addEventListener('focus', fetchFreshData);
+    return () => window.removeEventListener('focus', fetchFreshData);
+  }, []);
   const [jsonText, setJsonText] = useState(JSON.stringify(initialData, null, 2));
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -419,6 +463,17 @@ export default function AdminDashboard({
         setData(result.data);
         setJsonText(JSON.stringify(result.data, null, 2));
         setGlobalData(result.data);
+
+        // Instant cross-tab sync via BroadcastChannel and localStorage
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('aipc_conference_updated', Date.now().toString());
+            const bc = new BroadcastChannel('aipc_sync');
+            bc.postMessage({ type: 'UPDATE', data: result.data });
+            bc.close();
+          }
+        } catch (_) {}
+
         showToast('success', 'Conference settings published and saved to backend store!');
       } else {
         showToast('error', `Save failed: ${result.error || 'Server error'}`);
@@ -2654,10 +2709,14 @@ export default function AdminDashboard({
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const data = getConferenceData();
-  const registrations = getRegistrations();
-  const queries = getQueries();
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  const data = await getConferenceData(true);
+  const registrations = await getRegistrationsAsync(true);
+  const queries = await getQueriesAsync(true);
 
   return {
     props: {

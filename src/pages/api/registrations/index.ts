@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
-  getRegistrations,
+  getRegistrationsAsync,
   createRegistration,
   updateRegistration,
   deleteRegistration,
@@ -8,9 +8,18 @@ import {
 } from '@/lib/registrationsStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
+
   // GET: List all registrations + metrics
   if (req.method === 'GET') {
-    const list = getRegistrations();
+    const list = await getRegistrationsAsync();
     const stats = getRegistrationStats();
     return res.status(200).json({ success: true, registrations: list, stats });
   }
@@ -73,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // DELETE: Remove registration
   if (req.method === 'DELETE') {
     try {
-      const id = req.query.id as string || req.body?.id;
+      const id = (req.query.id as string) || req.body?.id;
       if (!id) {
         return res.status(400).json({ success: false, error: 'Registration ID is required.' });
       }
@@ -89,6 +98,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE']);
+  res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE', 'HEAD']);
   return res.status(405).json({ success: false, error: `Method ${req.method} Not Allowed` });
 }

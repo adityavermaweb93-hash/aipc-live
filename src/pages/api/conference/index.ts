@@ -1,11 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getConferenceData, saveConferenceData } from '@/lib/conferenceStore';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
 
   if (req.method === 'GET') {
-    const data = getConferenceData();
+    const data = await getConferenceData();
     return res.status(200).json({ success: true, data });
   }
 
@@ -15,7 +22,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(400).json({ success: false, error: 'Invalid payload: missing data field' });
     }
 
-    const result = saveConferenceData(body.data);
+    const result = await saveConferenceData(body.data);
     if (result.success) {
       return res.status(200).json({ success: true, data: body.data });
     } else {
@@ -23,6 +30,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     }
   }
 
-  res.setHeader('Allow', ['GET', 'POST']);
+  res.setHeader('Allow', ['GET', 'POST', 'HEAD']);
   return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
 }

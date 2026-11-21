@@ -1,15 +1,24 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import {
-  getQueries,
+  getQueriesAsync,
   updateQuery,
   deleteQuery,
   getQueryStats,
 } from '@/lib/queriesStore';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  if (req.method === 'HEAD') {
+    return res.status(200).end();
+  }
+
   // GET: Return all queries + stats
   if (req.method === 'GET') {
-    const queries = getQueries();
+    const queries = await getQueriesAsync();
     const stats = getQueryStats();
     return res.status(200).json({ success: true, queries, stats });
   }
@@ -57,6 +66,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  res.setHeader('Allow', ['GET', 'PATCH', 'DELETE']);
+  res.setHeader('Allow', ['GET', 'PATCH', 'DELETE', 'HEAD']);
   return res.status(405).json({ success: false, error: `Method ${req.method} Not Allowed` });
 }

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { put } from '@vercel/blob';
 
 export interface ContactQuery {
   id: string;
@@ -17,6 +18,7 @@ export interface ContactQuery {
 const DATA_DIR = path.join(process.cwd(), 'data');
 const QUERIES_FILE = path.join(DATA_DIR, 'queries.json');
 const TMP_QUERIES_FILE = path.join('/tmp', 'queries.json');
+const BLOB_URL = 'https://rc7k52a2g5kulnhr.public.blob.vercel-storage.com/data/queries.json';
 
 const INITIAL_QUERIES: ContactQuery[] = [
   {
@@ -67,6 +69,7 @@ const INITIAL_QUERIES: ContactQuery[] = [
 
 // In-memory cache for serverless environments (like Vercel)
 let inMemoryQueries: ContactQuery[] | null = null;
+let lastFetchTime = 0;
 
 // Ensure directory exists safely
 try {
@@ -87,6 +90,36 @@ try {
 }
 
 /**
+ * Get all contact queries asynchronously from Blob, memory, /tmp, or disk
+ */
+export async function getQueriesAsync(forceFresh = false): Promise<ContactQuery[]> {
+  const now = Date.now();
+  if (inMemoryQueries && !forceFresh && now - lastFetchTime < 1500) {
+    return inMemoryQueries;
+  }
+
+  try {
+    const res = await fetch(`${BLOB_URL}?t=${now}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store' },
+    });
+    if (res.ok) {
+      const live = await res.json();
+      if (Array.isArray(live)) {
+        inMemoryQueries = live;
+        lastFetchTime = now;
+        try {
+          fs.writeFileSync(TMP_QUERIES_FILE, JSON.stringify(live, null, 2), 'utf-8');
+        } catch (_) {}
+        return live;
+      }
+    }
+  } catch (_) {}
+
+  return getQueries();
+}
+
+/**
  * Get all contact queries from memory, /tmp, disk or fallback
  */
 export function getQueries(): ContactQuery[] {
@@ -98,6 +131,7 @@ export function getQueries(): ContactQuery[] {
     if (fs.existsSync(TMP_QUERIES_FILE)) {
       const content = fs.readFileSync(TMP_QUERIES_FILE, 'utf-8');
       inMemoryQueries = JSON.parse(content);
+      lastFetchTime = Date.now();
       return inMemoryQueries;
     }
   } catch (err) {
@@ -109,6 +143,7 @@ export function getQueries(): ContactQuery[] {
     if (fs.existsSync(QUERIES_FILE)) {
       const content = fs.readFileSync(QUERIES_FILE, 'utf-8');
       inMemoryQueries = JSON.parse(content);
+      lastFetchTime = Date.now();
       return inMemoryQueries;
     }
   } catch (err) {
@@ -123,6 +158,7 @@ export function getQueries(): ContactQuery[] {
  */
 export function saveQueries(records: ContactQuery[]): { success: boolean; error?: string } {
   inMemoryQueries = records;
+  lastFetchTime = Date.now();
 
   // 1. Write to /tmp for serverless runtime persistence
   try {
@@ -136,10 +172,19 @@ export function saveQueries(records: ContactQuery[]): { success: boolean; error?
     const tempFile = `${QUERIES_FILE}.tmp`;
     fs.writeFileSync(tempFile, JSON.stringify(records, null, 2), 'utf-8');
     fs.renameSync(tempFile, QUERIES_FILE);
-    return { success: true };
-  } catch (err: any) {
-    return { success: true };
+  } catch (err: any) {}
+
+  // 3. Persist to Vercel Blob store
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    put('data/queries.json', JSON.stringify(records, null, 2), {
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 0,
+    }).catch((err) => console.error('Blob save queries error:', err));
   }
+
+  return { success: true };
 }
 
 /**

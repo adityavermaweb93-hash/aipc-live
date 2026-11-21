@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { put } from '@vercel/blob';
 
 export interface RegistrationRecord {
   id: string;
@@ -30,6 +31,7 @@ export interface RegistrationRecord {
 const DATA_DIR = path.join(process.cwd(), 'data');
 const REGISTRATIONS_FILE = path.join(DATA_DIR, 'registrations.json');
 const TMP_REGISTRATIONS_FILE = path.join('/tmp', 'registrations.json');
+const BLOB_URL = 'https://rc7k52a2g5kulnhr.public.blob.vercel-storage.com/data/registrations.json';
 
 const INITIAL_REGISTRATIONS: RegistrationRecord[] = [
   {
@@ -156,6 +158,7 @@ const INITIAL_REGISTRATIONS: RegistrationRecord[] = [
 
 // In-memory cache for serverless environments (like Vercel)
 let inMemoryRegistrations: RegistrationRecord[] | null = null;
+let lastFetchTime = 0;
 
 // Ensure data directory exists safely
 try {
@@ -176,6 +179,36 @@ try {
 }
 
 /**
+ * Get all registrations asynchronously from Blob, memory, /tmp, or disk
+ */
+export async function getRegistrationsAsync(forceFresh = false): Promise<RegistrationRecord[]> {
+  const now = Date.now();
+  if (inMemoryRegistrations && !forceFresh && now - lastFetchTime < 1500) {
+    return inMemoryRegistrations;
+  }
+
+  try {
+    const res = await fetch(`${BLOB_URL}?t=${now}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store' },
+    });
+    if (res.ok) {
+      const live = await res.json();
+      if (Array.isArray(live)) {
+        inMemoryRegistrations = live;
+        lastFetchTime = now;
+        try {
+          fs.writeFileSync(TMP_REGISTRATIONS_FILE, JSON.stringify(live, null, 2), 'utf-8');
+        } catch (_) {}
+        return live;
+      }
+    }
+  } catch (_) {}
+
+  return getRegistrations();
+}
+
+/**
  * Get all registrations from memory, /tmp, disk or fallback
  */
 export function getRegistrations(): RegistrationRecord[] {
@@ -187,6 +220,7 @@ export function getRegistrations(): RegistrationRecord[] {
     if (fs.existsSync(TMP_REGISTRATIONS_FILE)) {
       const content = fs.readFileSync(TMP_REGISTRATIONS_FILE, 'utf-8');
       inMemoryRegistrations = JSON.parse(content);
+      lastFetchTime = Date.now();
       return inMemoryRegistrations;
     }
   } catch (err) {
@@ -198,6 +232,7 @@ export function getRegistrations(): RegistrationRecord[] {
     if (fs.existsSync(REGISTRATIONS_FILE)) {
       const content = fs.readFileSync(REGISTRATIONS_FILE, 'utf-8');
       inMemoryRegistrations = JSON.parse(content);
+      lastFetchTime = Date.now();
       return inMemoryRegistrations;
     }
   } catch (err) {
@@ -212,6 +247,7 @@ export function getRegistrations(): RegistrationRecord[] {
  */
 export function saveRegistrations(records: RegistrationRecord[]): { success: boolean; error?: string } {
   inMemoryRegistrations = records;
+  lastFetchTime = Date.now();
 
   // 1. Write to /tmp for serverless runtime persistence
   try {
@@ -225,10 +261,19 @@ export function saveRegistrations(records: RegistrationRecord[]): { success: boo
     const tempFile = `${REGISTRATIONS_FILE}.tmp`;
     fs.writeFileSync(tempFile, JSON.stringify(records, null, 2), 'utf-8');
     fs.renameSync(tempFile, REGISTRATIONS_FILE);
-    return { success: true };
-  } catch (err: any) {
-    return { success: true };
+  } catch (err: any) {}
+
+  // 3. Persist to Vercel Blob store
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    put('data/registrations.json', JSON.stringify(records, null, 2), {
+      access: 'public',
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 0,
+    }).catch((err) => console.error('Blob save registrations error:', err));
   }
+
+  return { success: true };
 }
 
 /**
