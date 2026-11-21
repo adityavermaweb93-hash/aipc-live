@@ -6,6 +6,13 @@ import { getConferenceData } from '@/lib/conferenceStore';
 import { getRegistrations, RegistrationRecord } from '@/lib/registrationsStore';
 import { getQueries, ContactQuery } from '@/lib/queriesStore';
 import { useConferenceContext } from '@/context/ConferenceContext';
+import HeaderTab from '@/components/admin/HeaderTab';
+import AboutTab from '@/components/admin/AboutTab';
+import OrganisersTab from '@/components/admin/OrganisersTab';
+import GalleryTab from '@/components/admin/GalleryTab';
+import FaqTab from '@/components/admin/FaqTab';
+import FooterTab from '@/components/admin/FooterTab';
+import MediaTab from '@/components/admin/MediaTab';
 
 interface AdminDashboardProps {
   initialData: any;
@@ -30,13 +37,20 @@ export default function AdminDashboard({
     | 'registrations'
     | 'queries'
     | 'annual'
-    | 'venue'
+    | 'header'
+    | 'about'
     | 'theme'
     | 'speakers'
     | 'schedule'
     | 'pricing'
     | 'books'
+    | 'organisers'
+    | 'gallery'
+    | 'venue'
+    | 'faq'
     | 'contact'
+    | 'footer'
+    | 'media'
     | 'json'
   >('registrations');
 
@@ -83,6 +97,7 @@ export default function AdminDashboard({
   const [isSaving, setIsSaving] = useState(false);
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [uploadedMedia, setUploadedMedia] = useState<{ name: string; url: string; time: string }[]>([]);
   const [jsonText, setJsonText] = useState(JSON.stringify(initialData, null, 2));
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -371,6 +386,10 @@ export default function AdminDashboard({
           const json = await res.json();
           if (json.success && json.url) {
             callback(json.url);
+            setUploadedMedia((prev) => [
+              { name: file.name, url: json.url, time: new Date().toLocaleTimeString() },
+              ...prev,
+            ]);
             showToast('success', `Image uploaded successfully: ${file.name}`);
           } else {
             showToast('error', `Upload failed: ${json.error || 'Unknown error'}`);
@@ -720,13 +739,19 @@ export default function AdminDashboard({
 
               {[
                 { id: 'annual', label: 'Year, Dates & Hero', icon: '📅' },
-                { id: 'venue', label: 'Venue & Location', icon: '📍' },
+                { id: 'header', label: 'Header & Navigation', icon: '🧭' },
+                { id: 'about', label: 'About & Highlights', icon: 'ℹ️' },
                 { id: 'theme', label: 'Theme & Scripture', icon: '📖' },
                 { id: 'speakers', label: 'Speakers Section', icon: '🎙️' },
                 { id: 'schedule', label: 'Programme Schedule', icon: '⏱️' },
                 { id: 'pricing', label: 'Accommodation & Fees', icon: '🏷️' },
                 { id: 'books', label: 'Complimentary Books', icon: '📚' },
+                { id: 'organisers', label: 'Organisers & Partners', icon: '🤝' },
+                { id: 'gallery', label: 'Photo Gallery', icon: '🖼️' },
+                { id: 'venue', label: 'Venue & Travel', icon: '📍' },
+                { id: 'faq', label: 'Common Questions FAQ', icon: '❓' },
                 { id: 'contact', label: 'Contact Details', icon: '📞' },
+                { id: 'footer', label: 'Footer & Legal', icon: '🦶' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -749,6 +774,21 @@ export default function AdminDashboard({
               <div className="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-[#8c8f94] tracking-wider border-t border-[#2c3338]/60 mt-2">
                 Tools
               </div>
+
+              <button
+                onClick={() => {
+                  setActiveTab('media');
+                  setMobileMenuOpen(false);
+                }}
+                className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center gap-2.5 border-l-4 ${
+                  activeTab === 'media'
+                    ? 'bg-[#2271b1] text-white border-[#72aee6] font-bold'
+                    : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
+                }`}
+              >
+                <span className="text-sm">📤</span>
+                <span>Media &amp; Uploads</span>
+              </button>
 
               <button
                 onClick={handleStartNextYearEdition}
@@ -1470,6 +1510,26 @@ export default function AdminDashboard({
                       </div>
                     )}
 
+                    {/* TAB: HEADER & NAVIGATION */}
+                    {activeTab === 'header' && (
+                      <HeaderTab
+                        data={data}
+                        setData={setData}
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                      />
+                    )}
+
+                    {/* TAB: ABOUT & STATS */}
+                    {activeTab === 'about' && (
+                      <AboutTab
+                        data={data}
+                        setData={setData}
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                      />
+                    )}
+
                     {/* TAB: VENUE & LOCATION */}
                     {activeTab === 'venue' && (
                       <div className="bg-white border border-[#c3c4c7] shadow-sm p-5 space-y-5">
@@ -2071,20 +2131,87 @@ export default function AdminDashboard({
                       </div>
                     )}
 
+                    {/* TAB: ORGANISERS & PARTNERS */}
+                    {activeTab === 'organisers' && (
+                      <OrganisersTab
+                        data={data}
+                        setData={setData}
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                      />
+                    )}
+
+                    {/* TAB: GALLERY & HIGHLIGHTS */}
+                    {activeTab === 'gallery' && (
+                      <GalleryTab
+                        data={data}
+                        setData={setData}
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                      />
+                    )}
+
                     {/* TAB: CONTACT */}
                     {activeTab === 'contact' && (
-                      <div className="bg-white border border-[#c3c4c7] shadow-sm p-5 space-y-4">
-                        <h2 className="text-sm font-bold text-[#1d2327] border-b border-gray-200 pb-2">
-                          Contact Channels &amp; FAQ Content
+                      <div className="bg-white border border-[#c3c4c7] shadow-sm p-5 space-y-5">
+                        <h2 className="text-sm font-bold text-[#1d2327] border-b border-gray-200 pb-2 flex items-center justify-between">
+                          <span>Contact Channels &amp; Secretariat Inquiry Settings</span>
+                          <span className="text-[11px] font-normal text-gray-500">Manage public contact cards and WhatsApp chat links</span>
                         </h2>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-[#f8f9fa] border border-[#e2e4e7]">
+                          <div>
+                            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+                              Section Badge
+                            </label>
+                            <input
+                              type="text"
+                              value={data.contact?.badge || ''}
+                              onChange={(e) =>
+                                setData({ ...data, contact: { ...data.contact, badge: e.target.value } })
+                              }
+                              placeholder="Get in touch"
+                              className="w-full bg-white border border-[#8c8f94] p-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+                              Title Prefix
+                            </label>
+                            <input
+                              type="text"
+                              value={data.contact?.titlePre || ''}
+                              onChange={(e) =>
+                                setData({ ...data, contact: { ...data.contact, titlePre: e.target.value } })
+                              }
+                              placeholder="Contact "
+                              className="w-full bg-white border border-[#8c8f94] p-1.5 text-xs"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+                              Title Span (Red)
+                            </label>
+                            <input
+                              type="text"
+                              value={data.contact?.titleSpan || ''}
+                              onChange={(e) =>
+                                setData({ ...data, contact: { ...data.contact, titleSpan: e.target.value } })
+                              }
+                              placeholder="Us"
+                              className="w-full bg-white border border-[#8c8f94] p-1.5 text-xs font-bold text-[#cc0000]"
+                            />
+                          </div>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="block text-xs font-bold text-[#1d2327] mb-1">
-                              Support Email
+                              Official Support Email
                             </label>
                             <input
                               type="email"
-                              value={data.contact.email}
+                              value={data.contact.email || ''}
                               onChange={(e) =>
                                 setData({ ...data, contact: { ...data.contact, email: e.target.value } })
                               }
@@ -2093,11 +2220,11 @@ export default function AdminDashboard({
                           </div>
                           <div>
                             <label className="block text-xs font-bold text-[#1d2327] mb-1">
-                              Phone Numbers
+                              Helpline Phone Numbers
                             </label>
                             <input
                               type="text"
-                              value={data.contact.phone}
+                              value={data.contact.phone || ''}
                               onChange={(e) =>
                                 setData({ ...data, contact: { ...data.contact, phone: e.target.value } })
                               }
@@ -2108,18 +2235,77 @@ export default function AdminDashboard({
 
                         <div>
                           <label className="block text-xs font-bold text-[#1d2327] mb-1">
-                            WhatsApp Direct Link
+                            Physical Venue Address (Contact Card)
                           </label>
-                          <input
-                            type="text"
-                            value={data.contact.whatsappUrl}
+                          <textarea
+                            rows={2}
+                            value={data.contact?.venueAddress || ''}
                             onChange={(e) =>
-                              setData({ ...data, contact: { ...data.contact, whatsappUrl: e.target.value } })
+                              setData({ ...data, contact: { ...data.contact, venueAddress: e.target.value } })
                             }
-                            className="w-full bg-white border border-[#8c8f94] p-2 text-xs font-mono"
+                            placeholder="GCC Hotel & Club, Mira Road (East), Mumbai – 401107"
+                            className="w-full bg-white border border-[#8c8f94] p-2 text-xs"
                           />
                         </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+                              WhatsApp Direct Chat Link
+                            </label>
+                            <input
+                              type="text"
+                              value={data.contact.whatsappUrl || ''}
+                              onChange={(e) =>
+                                setData({ ...data, contact: { ...data.contact, whatsappUrl: e.target.value } })
+                              }
+                              placeholder="https://wa.me/919886769948?text=..."
+                              className="w-full bg-white border border-[#8c8f94] p-2 text-xs font-mono"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+                              Inquiry Form Submission URL
+                            </label>
+                            <input
+                              type="text"
+                              value={data.contact?.formAction || '/api/contact'}
+                              onChange={(e) =>
+                                setData({ ...data, contact: { ...data.contact, formAction: e.target.value } })
+                              }
+                              placeholder="/api/contact or https://formspree.io/f/..."
+                              className="w-full bg-white border border-[#8c8f94] p-2 text-xs font-mono"
+                            />
+                          </div>
+                        </div>
                       </div>
+                    )}
+
+                    {/* TAB: FAQ */}
+                    {activeTab === 'faq' && (
+                      <FaqTab
+                        data={data}
+                        setData={setData}
+                      />
+                    )}
+
+                    {/* TAB: FOOTER */}
+                    {activeTab === 'footer' && (
+                      <FooterTab
+                        data={data}
+                        setData={setData}
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                      />
+                    )}
+
+                    {/* TAB: MEDIA */}
+                    {activeTab === 'media' && (
+                      <MediaTab
+                        onUpload={handleFileUpload}
+                        uploadingField={uploadingField}
+                        uploadedMedia={uploadedMedia}
+                      />
                     )}
 
                     {/* TAB: RAW JSON */}

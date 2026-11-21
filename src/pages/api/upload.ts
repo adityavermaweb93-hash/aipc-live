@@ -43,10 +43,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const safeFilename = `${Date.now()}_${base}${ext}`;
     const filePath = path.join(UPLOAD_DIR, safeFilename);
 
-    fs.writeFileSync(filePath, buffer);
-
-    const publicUrl = `/uploads/${safeFilename}`;
-    return res.status(200).json({ success: true, url: publicUrl, filename: safeFilename });
+    try {
+      fs.writeFileSync(filePath, buffer);
+      const publicUrl = `/uploads/${safeFilename}`;
+      return res.status(200).json({ success: true, url: publicUrl, filename: safeFilename });
+    } catch (fsErr: any) {
+      // In read-only serverless environment (Vercel), store in /tmp or return data URI
+      try {
+        const tmpPath = path.join('/tmp', safeFilename);
+        fs.writeFileSync(tmpPath, buffer);
+      } catch (tmpErr) {}
+      const mime = ext === '.png' ? 'image/png' : ext === '.webp' ? 'image/webp' : ext === '.svg' ? 'image/svg+xml' : 'image/jpeg';
+      const dataUri = `data:${mime};base64,${base64Data}`;
+      return res.status(200).json({ success: true, url: dataUri, filename: safeFilename });
+    }
   } catch (err: any) {
     console.error('Upload error:', err);
     return res.status(500).json({ success: false, error: err.message });
