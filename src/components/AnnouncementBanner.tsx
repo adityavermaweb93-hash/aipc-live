@@ -4,17 +4,10 @@ export interface AnnouncementItem {
   id: string;
   title: string;
   content: string;
-  bannerType: 'info' | 'warning' | 'urgent' | 'success';
-  linkUrl?: string | null;
-  linkText?: string | null;
+  badgeText?: string | null;
+  actionUrl?: string | null;
+  actionLabel?: string | null;
 }
-
-const TYPE_STYLES = {
-  urgent: 'bg-red-700 text-white border-red-800',
-  warning: 'bg-amber-600 text-black border-amber-700',
-  info: 'bg-[#1d2327] text-white border-white/10',
-  success: 'bg-emerald-700 text-white border-emerald-800',
-};
 
 export default function AnnouncementBanner() {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
@@ -36,25 +29,34 @@ export default function AnnouncementBanner() {
   if (isDismissed || announcements.length === 0) return null;
 
   const active = announcements[0];
-  const style = TYPE_STYLES[active.bannerType] || TYPE_STYLES.info;
+  const badge = active.badgeText || 'Notice';
+  const isUrgent = badge.toLowerCase().includes('urgent');
 
   return (
     <div
-      className={`relative z-[100001] px-4 py-2 text-xs border-b shadow-sm transition-all ${style}`}
+      className={`relative z-[100001] px-4 py-2.5 text-xs border-b shadow-sm transition-all ${
+        isUrgent
+          ? 'bg-[#801b0d] text-white border-red-900'
+          : 'bg-[#1d2327] text-white border-white/10'
+      }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-bold uppercase tracking-wider bg-black/20 px-1.5 py-0.5 rounded text-[10px]">
-            {active.bannerType === 'urgent' ? '⚠️ URGENT' : '📢 NOTICE'}
+          <span
+            className={`font-bold uppercase tracking-wider px-2 py-0.5 rounded text-[10px] ${
+              isUrgent ? 'bg-red-950 text-red-200' : 'bg-[#dba617] text-black'
+            }`}
+          >
+            {badge}
           </span>
           <span className="font-semibold">{active.title}:</span>
           <span className="opacity-90">{active.content}</span>
-          {active.linkUrl && (
+          {active.actionUrl && (
             <a
-              href={active.linkUrl}
-              className="underline font-bold hover:opacity-80 transition-opacity ml-1"
+              href={active.actionUrl}
+              className="underline font-bold hover:opacity-80 transition-opacity ml-1.5"
             >
-              {active.linkText || 'Learn More &rarr;'}
+              {active.actionLabel || 'Learn More &rarr;'}
             </a>
           )}
         </div>
@@ -62,8 +64,8 @@ export default function AnnouncementBanner() {
         <button
           onClick={() => setIsDismissed(true)}
           className="text-sm font-bold opacity-75 hover:opacity-100 transition-opacity p-1"
-          title="Dismiss notification"
-          aria-label="Dismiss notification"
+          title="Dismiss notice"
+          aria-label="Dismiss notice"
         >
           ✕
         </button>

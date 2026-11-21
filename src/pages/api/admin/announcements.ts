@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     try {
       const announcements = await prisma.announcement.findMany({
-        orderBy: { createdAt: 'desc' },
+        orderBy: { sortOrder: 'asc' },
       });
       return res.status(200).json({ success: true, announcements });
     } catch (err: any) {
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 2. POST: Create announcement
   if (req.method === 'POST') {
     try {
-      const { title, content, bannerType, linkUrl, linkText, isPublished, editionId } = req.body || {};
+      const { title, content, bannerType, badgeText, linkUrl, actionUrl, linkText, actionLabel, isPublished, editionId } = req.body || {};
 
       if (!title || !content) {
         return res.status(400).json({ success: false, error: 'Title and content are required.' });
@@ -38,7 +38,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let targetEditionId = editionId;
       if (!targetEditionId) {
         const active = await getActiveEdition();
-        targetEditionId = active?.id || null;
+        if (!active) {
+          return res.status(400).json({ success: false, error: 'No conference edition found to attach announcement.' });
+        }
+        targetEditionId = active.id;
       }
 
       const announcement = await prisma.announcement.create({
@@ -46,9 +49,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           editionId: targetEditionId,
           title: String(title).trim(),
           content: String(content).trim(),
-          bannerType: bannerType || 'info',
-          linkUrl: linkUrl ? String(linkUrl).trim() : null,
-          linkText: linkText ? String(linkText).trim() : null,
+          badgeText: badgeText || bannerType || 'Notice',
+          actionUrl: actionUrl || (linkUrl ? String(linkUrl).trim() : null),
+          actionLabel: actionLabel || (linkText ? String(linkText).trim() : null),
           isPublished: typeof isPublished === 'boolean' ? isPublished : false,
         },
       });
@@ -62,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // 3. PUT: Update announcement
   if (req.method === 'PUT') {
     try {
-      const { id, title, content, bannerType, linkUrl, linkText, isPublished } = req.body || {};
+      const { id, title, content, bannerType, badgeText, linkUrl, actionUrl, linkText, actionLabel, isPublished } = req.body || {};
       if (!id) {
         return res.status(400).json({ success: false, error: 'Announcement ID is required.' });
       }
@@ -70,9 +73,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const updateData: any = {};
       if (title !== undefined) updateData.title = String(title).trim();
       if (content !== undefined) updateData.content = String(content).trim();
-      if (bannerType !== undefined) updateData.bannerType = bannerType;
-      if (linkUrl !== undefined) updateData.linkUrl = linkUrl ? String(linkUrl).trim() : null;
-      if (linkText !== undefined) updateData.linkText = linkText ? String(linkText).trim() : null;
+      if (badgeText !== undefined || bannerType !== undefined) {
+        updateData.badgeText = badgeText || bannerType;
+      }
+      if (actionUrl !== undefined || linkUrl !== undefined) {
+        updateData.actionUrl = actionUrl || linkUrl || null;
+      }
+      if (actionLabel !== undefined || linkText !== undefined) {
+        updateData.actionLabel = actionLabel || linkText || null;
+      }
       if (typeof isPublished === 'boolean') updateData.isPublished = isPublished;
 
       const updated = await prisma.announcement.update({
