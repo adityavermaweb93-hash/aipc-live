@@ -13,6 +13,7 @@ import GalleryTab from '@/components/admin/GalleryTab';
 import FaqTab from '@/components/admin/FaqTab';
 import FooterTab from '@/components/admin/FooterTab';
 import MediaTab from '@/components/admin/MediaTab';
+import EditionsTab from '@/components/admin/EditionsTab';
 
 interface AdminDashboardProps {
   initialData: any;
@@ -34,6 +35,7 @@ export default function AdminDashboard({
 
   // Active Tab / WordPress Menu Item
   const [activeTab, setActiveTab] = useState<
+    | 'editions'
     | 'registrations'
     | 'queries'
     | 'annual'
@@ -793,6 +795,7 @@ export default function AdminDashboard({
               </div>
 
               {[
+                { id: 'editions', label: 'Conference Editions', icon: '🏛️' },
                 { id: 'annual', label: 'Year, Dates & Hero', icon: '📅' },
                 { id: 'header', label: 'Header & Navigation', icon: '🧭' },
                 { id: 'about', label: 'About & Highlights', icon: 'ℹ️' },
@@ -887,6 +890,19 @@ export default function AdminDashboard({
           {/* FULL WIDTH: spans from sidebar to right edge, no centering! */}
           {/* ======================================================== */}
           <main id="wpbody-content" className="flex-1 min-w-0 bg-[#f0f0f1] p-5 lg:p-7">
+            {/* ======================================================== */}
+            {/* VIEW: CONFERENCE EDITIONS (Multi-Edition Platform Manager) */}
+            {/* ======================================================== */}
+            {activeTab === 'editions' && (
+              <EditionsTab
+                showToast={showToast}
+                onSelectEditionToEdit={(year) => {
+                  showToast('success', `Selected edition ${year}. Editing content tabs below.`);
+                  setActiveTab('annual');
+                }}
+              />
+            )}
+
             {/* ======================================================== */}
             {/* VIEW 1: ATTENDEE REGISTRATIONS (WordPress Table View) */}
             {/* ======================================================== */}
