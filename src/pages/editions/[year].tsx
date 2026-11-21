@@ -26,8 +26,29 @@ interface EditionPageProps {
   isArchive: boolean;
 }
 
+const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
+  hero: Hero,
+  about: About,
+  theme: Theme,
+  speakers: Speakers,
+  schedule: Schedule,
+  pricing: Pricing,
+  books: Books,
+  organisers: Organisers,
+  gallery: Gallery,
+  venue: Venue,
+  faq: Faq,
+  contact: Contact,
+};
+
 export default function EditionPage({ year, isArchive }: EditionPageProps) {
   const data = useConference();
+
+  const sectionsList = Array.isArray(data.sections) && data.sections.length > 0
+    ? data.sections
+        .filter((s: any) => s.isEnabled)
+        .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    : null;
 
   return (
     <>
@@ -73,18 +94,37 @@ export default function EditionPage({ year, isArchive }: EditionPageProps) {
 
       {/* Main Page Layout */}
       <main id="main">
-        <Hero />
-        <About />
-        <Theme />
-        <Speakers />
-        <Schedule />
-        <Pricing />
-        <Books />
-        <Organisers />
-        <Gallery />
-        <Venue />
-        <Faq />
-        <Contact />
+        {sectionsList ? (
+          sectionsList.map((sec: any) => {
+            const Comp = SECTION_COMPONENTS[sec.key];
+            if (!Comp) return null;
+            const visibilityClass = !sec.desktopVisible
+              ? 'md:hidden'
+              : !sec.mobileVisible
+              ? 'hidden md:block'
+              : '';
+            return (
+              <div key={sec.key} className={visibilityClass || undefined}>
+                <Comp />
+              </div>
+            );
+          })
+        ) : (
+          <>
+            <Hero />
+            <About />
+            <Theme />
+            <Speakers />
+            <Schedule />
+            <Pricing />
+            <Books />
+            <Organisers />
+            <Gallery />
+            <Venue />
+            <Faq />
+            <Contact />
+          </>
+        )}
       </main>
 
       {/* Footer */}

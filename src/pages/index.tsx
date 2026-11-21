@@ -4,6 +4,7 @@ import type { GetServerSideProps } from 'next';
 import { getConferenceData } from '@/lib/conferenceStore';
 import { useConference } from '@/context/ConferenceContext';
 import FloatingNav from '@/components/FloatingNav';
+import AnnouncementBanner from '@/components/AnnouncementBanner';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import About from '@/components/About';
@@ -19,8 +20,29 @@ import Faq from '@/components/Faq';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
 
+const SECTION_COMPONENTS: Record<string, React.ComponentType> = {
+  hero: Hero,
+  about: About,
+  theme: Theme,
+  speakers: Speakers,
+  schedule: Schedule,
+  pricing: Pricing,
+  books: Books,
+  organisers: Organisers,
+  gallery: Gallery,
+  venue: Venue,
+  faq: Faq,
+  contact: Contact,
+};
+
 export default function Home() {
   const data = useConference();
+
+  const sectionsList = Array.isArray(data.sections) && data.sections.length > 0
+    ? data.sections
+        .filter((s: any) => s.isEnabled)
+        .sort((a: any, b: any) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    : null;
 
   return (
     <>
@@ -32,6 +54,9 @@ export default function Home() {
         />
       </Head>
 
+      {/* Announcement Alert Banner */}
+      <AnnouncementBanner />
+
       {/* Floating Side Nav */}
       <FloatingNav />
 
@@ -40,41 +65,37 @@ export default function Home() {
 
       {/* Main Page Layout */}
       <main id="main">
-        {/* Hero Section */}
-        <Hero />
-
-        {/* About Section */}
-        <About />
-
-        {/* Theme Section */}
-        <Theme />
-
-        {/* Speakers Section */}
-        <Speakers />
-
-        {/* Schedule Section */}
-        <Schedule />
-
-        {/* Accommodation / Pricing Section */}
-        <Pricing />
-
-        {/* Free Books Section */}
-        <Books />
-
-        {/* Organisers & Partners Section */}
-        <Organisers />
-
-        {/* Gallery Section */}
-        <Gallery />
-
-        {/* Venue Section */}
-        <Venue />
-
-        {/* FAQ Section */}
-        <Faq />
-
-        {/* Contact Section */}
-        <Contact />
+        {sectionsList ? (
+          sectionsList.map((sec: any) => {
+            const Comp = SECTION_COMPONENTS[sec.key];
+            if (!Comp) return null;
+            const visibilityClass = !sec.desktopVisible
+              ? 'md:hidden'
+              : !sec.mobileVisible
+              ? 'hidden md:block'
+              : '';
+            return (
+              <div key={sec.key} className={visibilityClass || undefined}>
+                <Comp />
+              </div>
+            );
+          })
+        ) : (
+          <>
+            <Hero />
+            <About />
+            <Theme />
+            <Speakers />
+            <Schedule />
+            <Pricing />
+            <Books />
+            <Organisers />
+            <Gallery />
+            <Venue />
+            <Faq />
+            <Contact />
+          </>
+        )}
       </main>
 
       {/* Footer */}

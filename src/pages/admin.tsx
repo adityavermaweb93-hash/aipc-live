@@ -14,17 +14,23 @@ import FaqTab from '@/components/admin/FaqTab';
 import FooterTab from '@/components/admin/FooterTab';
 import MediaTab from '@/components/admin/MediaTab';
 import EditionsTab from '@/components/admin/EditionsTab';
+import BuilderTab from '@/components/admin/BuilderTab';
+import UsersTab from '@/components/admin/UsersTab';
+import AnnouncementsTab from '@/components/admin/AnnouncementsTab';
+import { getAdminSession, AdminUserSession } from '@/lib/session';
 
 interface AdminDashboardProps {
   initialData: any;
   initialRegistrations: RegistrationRecord[];
   initialQueries: ContactQuery[];
+  currentUser?: AdminUserSession | null;
 }
 
 export default function AdminDashboard({
   initialData,
   initialRegistrations,
   initialQueries,
+  currentUser,
 }: AdminDashboardProps) {
   const { setData: setGlobalData } = useConferenceContext();
   const [data, setData] = useState(initialData);
@@ -36,6 +42,9 @@ export default function AdminDashboard({
   // Active Tab / WordPress Menu Item
   const [activeTab, setActiveTab] = useState<
     | 'editions'
+    | 'builder'
+    | 'announcements'
+    | 'users'
     | 'registrations'
     | 'queries'
     | 'annual'
@@ -54,7 +63,7 @@ export default function AdminDashboard({
     | 'footer'
     | 'media'
     | 'json'
-  >('registrations');
+  >('editions');
 
   const [activeScheduleDay, setActiveScheduleDay] = useState<'day1' | 'day2' | 'day3'>('day1');
   const [activeBookYear, setActiveBookYear] = useState<string>(data.meta?.year || '2026');
@@ -149,6 +158,13 @@ export default function AdminDashboard({
   const showToast = (type: 'success' | 'error', message: string) => {
     setSaveToast({ type, message });
     setTimeout(() => setSaveToast(null), 5000);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth/logout', { method: 'POST' });
+    } catch (e) {}
+    window.location.href = '/admin/login';
   };
 
   // Refresh registrations
@@ -708,8 +724,22 @@ export default function AdminDashboard({
             </span>
 
             <span className="text-[#c3c4c7] hidden sm:inline border-l border-[#2c3338] pl-3">
-              Howdy, <strong className="text-white">Admin</strong> 👤
+              Howdy, <strong className="text-white">{currentUser?.name || 'Admin'}</strong>
+              {currentUser?.role && (
+                <span className="ml-1.5 bg-[#2c3338] text-[#72aee6] text-[10px] font-bold px-1.5 py-0.5 rounded border border-[#3c434a]">
+                  {currentUser.role.replace('_', ' ')}
+                </span>
+              )}
             </span>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-xs text-red-400 hover:text-red-300 font-semibold border-l border-[#2c3338] pl-3 hover:underline"
+              title="End session and log out"
+            >
+              Sign Out
+            </button>
           </div>
         </header>
 
@@ -796,6 +826,8 @@ export default function AdminDashboard({
 
               {[
                 { id: 'editions', label: 'Conference Editions', icon: '🏛️' },
+                { id: 'builder', label: 'Homepage Builder', icon: '🏗️' },
+                { id: 'announcements', label: 'Announcements & Notices', icon: '📢' },
                 { id: 'annual', label: 'Year, Dates & Hero', icon: '📅' },
                 { id: 'header', label: 'Header & Navigation', icon: '🧭' },
                 { id: 'about', label: 'About & Highlights', icon: 'ℹ️' },
@@ -870,6 +902,23 @@ export default function AdminDashboard({
                 <span className="text-sm">⚙️</span>
                 <span>Raw JSON Backup</span>
               </button>
+
+              {(!currentUser || currentUser.role === 'SUPER_ADMIN') && (
+                <button
+                  onClick={() => {
+                    setActiveTab('users');
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center gap-2.5 border-l-4 ${
+                    activeTab === 'users'
+                      ? 'bg-[#2271b1] text-white border-[#72aee6] font-bold'
+                      : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
+                  }`}
+                >
+                  <span className="text-sm">👥</span>
+                  <span>Team Users &amp; Roles</span>
+                </button>
+              )}
             </div>
 
             {/* Bottom Sidebar Footer */}
@@ -900,6 +949,33 @@ export default function AdminDashboard({
                   showToast('success', `Selected edition ${year}. Editing content tabs below.`);
                   setActiveTab('annual');
                 }}
+              />
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW: HOMEPAGE SECTION BUILDER */}
+            {/* ======================================================== */}
+            {activeTab === 'builder' && (
+              <BuilderTab
+                onNavigateTab={(tabId) => setActiveTab(tabId as any)}
+                showToast={showToast}
+              />
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW: ANNOUNCEMENTS & URGENT NOTICES */}
+            {/* ======================================================== */}
+            {activeTab === 'announcements' && (
+              <AnnouncementsTab showToast={showToast} />
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW: TEAM USERS & ROLE-BASED ACCESS CONTROL */}
+            {/* ======================================================== */}
+            {activeTab === 'users' && (
+              <UsersTab
+                currentUserId={currentUser?.id}
+                showToast={showToast}
               />
             )}
 
@@ -2725,11 +2801,22 @@ export default function AdminDashboard({
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0, s-maxage=0');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('Surrogate-Control', 'no-store');
+
+  const session = await getAdminSession(req, res);
+  if (!session.user) {
+    return {
+      redirect: {
+        destination: '/admin/login',
+        permanent: false,
+      },
+    };
+  }
+
   const data = await getConferenceData(true);
   const registrations = await getRegistrationsAsync(true);
   const queries = await getQueriesAsync(true);
@@ -2739,6 +2826,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
       initialData: data,
       initialRegistrations: registrations,
       initialQueries: queries,
+      currentUser: session.user,
     },
   };
 };

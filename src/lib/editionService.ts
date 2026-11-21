@@ -370,6 +370,18 @@ export function formatEditionToConferenceData(edition: any) {
   }));
 
   return {
+    sections: Array.isArray(edition.sections)
+      ? edition.sections.map((s: any) => ({
+          key: s.sectionKey,
+          title: s.title || s.sectionKey,
+          subtitle: s.subtitle || '',
+          isEnabled: s.isEnabled,
+          sortOrder: s.sortOrder,
+          desktopVisible: s.desktopVisible !== false,
+          mobileVisible: s.mobileVisible !== false,
+          layoutVariant: s.layoutVariant || 'default',
+        }))
+      : [],
     meta: {
       year: edition.year,
       dates: edition.datesDisplay,
