@@ -727,6 +727,11 @@ export default function AdminDashboard({
     <>
       <Head>
         <title>AIPC Administration &lsaquo; All India Pastors&rsquo; Conference</title>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
       </Head>
 
       {/* WordPress Admin Shell (Edge-to-Edge, Flush Left & Full Width) */}
@@ -749,15 +754,20 @@ export default function AdminDashboard({
               ☰
             </button>
 
-            {/* AIPC Wp-style Logo */}
+            {/* AIPC Official Brand Logo */}
             <Link
               href="/admin"
-              className="flex items-center gap-1.5 font-bold text-white hover:text-[#72aee6] transition-colors"
+              className="flex items-center gap-2 font-bold text-white hover:opacity-85 transition-opacity"
+              title="AIPC Admin"
             >
-              <span className="w-5 h-5 bg-[#7F0401] rounded-sm text-white flex items-center justify-center font-black text-[11px] leading-none shadow-sm">
-                W
+              <img
+                src={data.header?.logo || '/assets/AIPC-White-1.png'}
+                alt="AIPC Logo"
+                className="h-5 w-auto max-w-[90px] object-contain"
+              />
+              <span className="hidden sm:inline text-xs text-[#8c8f94] font-medium border-l border-[#3c434a] pl-2">
+                {data.meta.year}
               </span>
-              <span className="hidden sm:inline">AIPC {data.meta.year}</span>
             </Link>
 
             <Link

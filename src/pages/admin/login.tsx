@@ -43,6 +43,11 @@ export default function AdminLoginPage() {
       <Head>
         <title>AIPC Portal Sign In – All India Pastors’ Conference</title>
         <meta name="robots" content="noindex, nofollow" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
       </Head>
 
       <div className="min-h-screen bg-[#111] flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">

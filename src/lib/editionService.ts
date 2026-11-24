@@ -392,7 +392,7 @@ export function formatEditionToConferenceData(edition: any) {
         '*THE ALL INDIA PASTORS’ CONFERENCE IS AN ENGLISH CONFERENCE, \nSO PLEASE PLAN TO REGISTER AND ATTEND ONLY IF YOU ARE WELL-VERSED IN ENGLISH.',
     },
     header: {
-      logo: '/assets/AIPC-White-1.png',
+      logo: (edition as any).logoUrl || '/assets/AIPC-White-1.png',
       navLinks: [
         { label: 'ABOUT', href: '#about' },
         { label: 'THEME', href: '#theme' },

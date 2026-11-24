@@ -29,9 +29,9 @@ export default function Header() {
         <div className="flex items-center">
           <Link href="/" className="inline-block">
             <img
-              src={data.header.logo}
-              alt="AIPC White"
-              className="h-[30px] sm:h-[30px] max-h-[30px] w-auto object-contain"
+              src={data.header?.logo || '/assets/AIPC-White-1.png'}
+              alt="AIPC Logo"
+              className="h-[34px] sm:h-[38px] max-h-[42px] w-auto object-contain"
               fetchPriority="high"
             />
           </Link>

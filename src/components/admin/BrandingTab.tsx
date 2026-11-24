@@ -35,6 +35,7 @@ export default function BrandingTab({
   const currentTagline =
     data.hero?.tagline || 'A Conference for Indian Churches by Indians.';
   const currentForText = data.meta?.forText || 'Men who love the Church';
+  const currentLogo = data.header?.logo || '/assets/AIPC-White-1.png';
 
   const [brandAcronym, setBrandAcronym] = useState(currentBrand);
   const [brandFullName, setBrandFullName] = useState(currentFullName);
@@ -46,6 +47,7 @@ export default function BrandingTab({
   const [preTitle, setPreTitle] = useState(currentPreTitle);
   const [tagline, setTagline] = useState(currentTagline);
   const [forText, setForText] = useState(currentForText);
+  const [logoUrl, setLogoUrl] = useState(currentLogo);
 
   // Quick preset shortcuts
   const applyPreset = (presetAcronym: string, presetName: string) => {
@@ -66,6 +68,10 @@ export default function BrandingTab({
         brandAcronym: brandAcronym.trim(),
         brandFullName: brandFullName.trim(),
         forText: forText.trim(),
+      },
+      header: {
+        ...data.header,
+        logo: logoUrl.trim() || '/assets/AIPC-White-1.png',
       },
       hero: {
         ...data.hero,
@@ -244,6 +250,47 @@ export default function BrandingTab({
               <span className="text-[10px] text-gray-400">
                 Shown in header metadata, SEO tags, and legal footer
               </span>
+            </div>
+          </div>
+
+          {/* Logo Configuration */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <label className="block text-xs font-bold text-[#1d2327] mb-1">
+              Official Conference Logo Image
+            </label>
+            <p className="text-[11px] text-gray-500 mb-2">
+              Used in the header navigation, admin header, browser favicon, and social embeds (supports transparent white PNG, SVG, WebP).
+            </p>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-[#f8f9fa] p-3 border border-[#e2e4e7] rounded">
+              <div className="w-40 h-12 bg-[#111] rounded border border-gray-700 flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-inner">
+                {logoUrl ? (
+                  <img src={logoUrl} alt="Logo Preview" className="max-h-full max-w-full object-contain" />
+                ) : (
+                  <span className="text-[10px] text-gray-500">No Logo</span>
+                )}
+              </div>
+              <div className="flex-1 w-full space-y-1.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://aipc.live/wp-content/uploads/2023/01/AIPC-White-1.png or /assets/AIPC-White-1.png"
+                    className="flex-1 bg-white border border-[#8c8f94] p-1.5 text-xs font-mono focus:border-[#2271b1] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setLogoUrl('https://aipc.live/wp-content/uploads/2023/01/AIPC-White-1.png')}
+                    className="px-2.5 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded shrink-0 cursor-pointer"
+                    title="Set to AIPC White Logo"
+                  >
+                    Set AIPC White
+                  </button>
+                </div>
+                <div className="text-[10px] text-gray-500">
+                  Primary source: <code>https://aipc.live/wp-content/uploads/2023/01/AIPC-White-1.png</code> &bull; Local mirror: <code>/assets/AIPC-White-1.png</code>
+                </div>
+              </div>
             </div>
           </div>
         </div>

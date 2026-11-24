@@ -38,6 +38,9 @@ export async function getConferenceData(forceFresh = false): Promise<any> {
       if (activeEdition) {
         const formatted = formatEditionToConferenceData(activeEdition);
         if (formatted) {
+          if (inMemoryData?.header?.logo) {
+            formatted.header = { ...formatted.header, ...inMemoryData.header };
+          }
           inMemoryData = formatted;
           lastFetchTime = now;
           try {
