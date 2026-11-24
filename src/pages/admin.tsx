@@ -17,6 +17,37 @@ import EditionsTab from '@/components/admin/EditionsTab';
 import BuilderTab from '@/components/admin/BuilderTab';
 import UsersTab from '@/components/admin/UsersTab';
 import AnnouncementsTab from '@/components/admin/AnnouncementsTab';
+import BrandingTab from '@/components/admin/BrandingTab';
+import {
+  ClipboardList,
+  MessageSquare,
+  Layers,
+  Sparkles,
+  LayoutTemplate,
+  Megaphone,
+  Calendar,
+  Compass,
+  Info,
+  BookOpen,
+  Mic,
+  Clock,
+  Tag,
+  BookMarked,
+  Users,
+  Image as ImageIcon,
+  MapPin,
+  HelpCircle,
+  Phone,
+  FileText,
+  UploadCloud,
+  Zap,
+  Code2,
+  UserCog,
+  ExternalLink,
+  Save,
+  Plus,
+  Trash2,
+} from 'lucide-react';
 import { getAdminSession, AdminUserSession } from '@/lib/session';
 
 interface AdminDashboardProps {
@@ -42,6 +73,7 @@ export default function AdminDashboard({
   // Active Tab / WordPress Menu Item
   const [activeTab, setActiveTab] = useState<
     | 'editions'
+    | 'branding'
     | 'builder'
     | 'announcements'
     | 'users'
@@ -64,6 +96,8 @@ export default function AdminDashboard({
     | 'media'
     | 'json'
   >('editions');
+
+  const [newBookYearInput, setNewBookYearInput] = useState('');
 
   const [activeScheduleDay, setActiveScheduleDay] = useState<'day1' | 'day2' | 'day3'>('day1');
   const [activeBookYear, setActiveBookYear] = useState<string>(data.meta?.year || '2026');
@@ -165,6 +199,72 @@ export default function AdminDashboard({
       await fetch('/api/admin/auth/logout', { method: 'POST' });
     } catch (e) {}
     window.location.href = '/admin/login';
+  };
+
+  // Delete a book year from complimentary books
+  const handleDeleteBookYear = (yearToDelete: string) => {
+    if (!data.books?.years || data.books.years.length <= 1) {
+      showToast('error', 'Cannot delete the last remaining book year.');
+      return;
+    }
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete year ${yearToDelete} from complimentary books?`
+      )
+    ) {
+      return;
+    }
+    const nextYears = data.books.years.filter((y: string) => y !== yearToDelete);
+    const nextBooksData = { ...(data.books.booksData || {}) };
+    delete nextBooksData[yearToDelete];
+
+    setData({
+      ...data,
+      books: {
+        ...data.books,
+        years: nextYears,
+        booksData: nextBooksData,
+      },
+    });
+
+    if (activeBookYear === yearToDelete) {
+      setActiveBookYear(nextYears[0] || '2026');
+    }
+
+    showToast(
+      'success',
+      `Year ${yearToDelete} deleted. Remember to click "Publish Changes" or "Save Config" to save.`
+    );
+  };
+
+  // Add a new book year
+  const handleAddBookYear = () => {
+    const clean = newBookYearInput.trim();
+    if (!clean || !/^\d{4}$/.test(clean)) {
+      showToast('error', 'Please enter a valid 4-digit year (e.g. 2025).');
+      return;
+    }
+    if (data.books?.years?.includes(clean)) {
+      showToast('error', `Year ${clean} already exists in the list.`);
+      return;
+    }
+    const nextYears = [clean, ...(data.books.years || [])].sort(
+      (a, b) => Number(b) - Number(a)
+    );
+    setData({
+      ...data,
+      books: {
+        ...data.books,
+        years: nextYears,
+        booksData: {
+          ...(data.books.booksData || {}),
+          [clean]: [],
+        },
+      },
+    });
+    setActiveBookYear(clean);
+    setNewBookYearInput('');
+    showToast('success', `Year ${clean} added! You can now upload book covers for it.`);
   };
 
   // Refresh registrations
@@ -663,28 +763,28 @@ export default function AdminDashboard({
             <Link
               href="/"
               target="_blank"
-              className="hidden sm:flex items-center gap-1 text-[#c3c4c7] hover:text-[#72aee6] transition-colors"
+              className="hidden sm:flex items-center gap-1.5 text-[#c3c4c7] hover:text-[#72aee6] transition-colors"
               title="View Public Site"
             >
-              <span>🏠</span>
-              <span>Visit Site ↗</span>
+              <ExternalLink className="w-3.5 h-3.5" strokeWidth={1.75} />
+              <span>Visit Site</span>
             </Link>
 
             {/* Quick New Attendee Button */}
             <button
               onClick={() => setIsAddRegOpen(true)}
-              className="hidden md:flex items-center gap-1 text-[#c3c4c7] hover:text-white px-2 py-0.5 rounded hover:bg-[#2c3338] transition-colors"
+              className="hidden md:flex items-center gap-1 text-[#c3c4c7] hover:text-white px-2 py-0.5 rounded hover:bg-[#2c3338] transition-colors cursor-pointer"
             >
-              <span>+</span>
+              <Plus className="w-3.5 h-3.5" strokeWidth={2} />
               <span>New Attendee</span>
             </button>
 
             {/* Inquiries Notification */}
             <button
               onClick={() => setActiveTab('queries')}
-              className="flex items-center gap-1 text-[#c3c4c7] hover:text-white px-2 py-0.5 rounded hover:bg-[#2c3338] transition-colors"
+              className="flex items-center gap-1.5 text-[#c3c4c7] hover:text-white px-2 py-0.5 rounded hover:bg-[#2c3338] transition-colors cursor-pointer"
             >
-              <span>💬</span>
+              <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.75} />
               <span className="hidden sm:inline">Inquiries</span>
               {pendingQueriesCount > 0 && (
                 <span className="bg-[#d63638] text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">
@@ -699,7 +799,7 @@ export default function AdminDashboard({
             <button
               onClick={() => handleSaveToBackend()}
               disabled={isSaving}
-              className={`bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold px-3 py-1 rounded shadow-sm flex items-center gap-1.5 transition-colors ${
+              className={`bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold px-3 py-1 rounded shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer ${
                 isSaving ? 'opacity-70 cursor-not-allowed' : ''
               }`}
             >
@@ -713,7 +813,7 @@ export default function AdminDashboard({
                 </>
               ) : (
                 <>
-                  <span>💾</span>
+                  <Save className="w-3.5 h-3.5" strokeWidth={1.75} />
                   <span>Save Config</span>
                 </>
               )}
@@ -786,7 +886,12 @@ export default function AdminDashboard({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-sm">📋</span>
+                  <ClipboardList
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      activeTab === 'registrations' ? 'text-white' : 'text-[#8c8f94]'
+                    }`}
+                    strokeWidth={1.75}
+                  />
                   <span>Registrations</span>
                 </div>
                 <span className="bg-[#2c3338] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -807,7 +912,12 @@ export default function AdminDashboard({
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-sm">💬</span>
+                  <MessageSquare
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      activeTab === 'queries' ? 'text-white' : 'text-[#8c8f94]'
+                    }`}
+                    strokeWidth={1.75}
+                  />
                   <span>Queries &amp; Replies</span>
                 </div>
                 {pendingQueriesCount > 0 ? (
@@ -825,40 +935,50 @@ export default function AdminDashboard({
               </div>
 
               {[
-                { id: 'editions', label: 'Conference Editions', icon: '🏛️' },
-                { id: 'builder', label: 'Homepage Builder', icon: '🏗️' },
-                { id: 'announcements', label: 'Announcements & Notices', icon: '📢' },
-                { id: 'annual', label: 'Year, Dates & Hero', icon: '📅' },
-                { id: 'header', label: 'Header & Navigation', icon: '🧭' },
-                { id: 'about', label: 'About & Highlights', icon: 'ℹ️' },
-                { id: 'theme', label: 'Theme & Scripture', icon: '📖' },
-                { id: 'speakers', label: 'Speakers Section', icon: '🎙️' },
-                { id: 'schedule', label: 'Programme Schedule', icon: '⏱️' },
-                { id: 'pricing', label: 'Accommodation & Fees', icon: '🏷️' },
-                { id: 'books', label: 'Complimentary Books', icon: '📚' },
-                { id: 'organisers', label: 'Organisers & Partners', icon: '🤝' },
-                { id: 'gallery', label: 'Photo Gallery', icon: '🖼️' },
-                { id: 'venue', label: 'Venue & Travel', icon: '📍' },
-                { id: 'faq', label: 'Common Questions FAQ', icon: '❓' },
-                { id: 'contact', label: 'Contact Details', icon: '📞' },
-                { id: 'footer', label: 'Footer & Legal', icon: '🦶' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id as any);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center gap-2.5 border-l-4 ${
-                    activeTab === item.id
-                      ? 'bg-[#2271b1] text-white border-[#72aee6] font-bold'
-                      : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
-                  }`}
-                >
-                  <span className="text-sm">{item.icon}</span>
-                  <span>{item.label}</span>
-                </button>
-              ))}
+                { id: 'editions', label: 'Conference Editions', Icon: Layers },
+                { id: 'branding', label: 'Brand & Theme (AIPC/AIL)', Icon: Sparkles },
+                { id: 'builder', label: 'Homepage Builder', Icon: LayoutTemplate },
+                { id: 'announcements', label: 'Announcements & Notices', Icon: Megaphone },
+                { id: 'annual', label: 'Year, Dates & Hero', Icon: Calendar },
+                { id: 'header', label: 'Header & Navigation', Icon: Compass },
+                { id: 'about', label: 'About & Highlights', Icon: Info },
+                { id: 'theme', label: 'Theme & Scripture', Icon: BookOpen },
+                { id: 'speakers', label: 'Speakers Section', Icon: Mic },
+                { id: 'schedule', label: 'Programme Schedule', Icon: Clock },
+                { id: 'pricing', label: 'Accommodation & Fees', Icon: Tag },
+                { id: 'books', label: 'Complimentary Books', Icon: BookMarked },
+                { id: 'organisers', label: 'Organisers & Partners', Icon: Users },
+                { id: 'gallery', label: 'Photo Gallery', Icon: ImageIcon },
+                { id: 'venue', label: 'Venue & Travel', Icon: MapPin },
+                { id: 'faq', label: 'Common Questions FAQ', Icon: HelpCircle },
+                { id: 'contact', label: 'Contact Details', Icon: Phone },
+                { id: 'footer', label: 'Footer & Legal', Icon: FileText },
+              ].map((item) => {
+                const ItemIcon = item.Icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => {
+                      setActiveTab(item.id as any);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full text-left px-3.5 py-2 text-xs transition-colors flex items-center gap-2.5 border-l-4 ${
+                      isActive
+                        ? 'bg-[#2271b1] text-white border-[#72aee6] font-bold'
+                        : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
+                    }`}
+                  >
+                    <ItemIcon
+                      className={`w-4 h-4 shrink-0 transition-colors ${
+                        isActive ? 'text-white' : 'text-[#8c8f94]'
+                      }`}
+                      strokeWidth={1.75}
+                    />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
 
               {/* Group: Tools */}
               <div className="px-3 pt-4 pb-1 text-[10px] uppercase font-bold text-[#8c8f94] tracking-wider border-t border-[#2c3338]/60 mt-2">
@@ -876,7 +996,12 @@ export default function AdminDashboard({
                     : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
                 }`}
               >
-                <span className="text-sm">📤</span>
+                <UploadCloud
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    activeTab === 'media' ? 'text-white' : 'text-[#8c8f94]'
+                  }`}
+                  strokeWidth={1.75}
+                />
                 <span>Media &amp; Uploads</span>
               </button>
 
@@ -884,7 +1009,7 @@ export default function AdminDashboard({
                 onClick={handleStartNextYearEdition}
                 className="w-full text-left px-3.5 py-2 text-xs text-[#dba617] hover:bg-[#2c3338] hover:text-white transition-colors flex items-center gap-2.5 border-l-4 border-transparent"
               >
-                <span className="text-sm">⚡</span>
+                <Zap className="w-4 h-4 shrink-0 text-[#dba617]" strokeWidth={1.75} />
                 <span>Annual Switcher</span>
               </button>
 
@@ -899,7 +1024,12 @@ export default function AdminDashboard({
                     : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
                 }`}
               >
-                <span className="text-sm">⚙️</span>
+                <Code2
+                  className={`w-4 h-4 shrink-0 transition-colors ${
+                    activeTab === 'json' ? 'text-white' : 'text-[#8c8f94]'
+                  }`}
+                  strokeWidth={1.75}
+                />
                 <span>Raw JSON Backup</span>
               </button>
 
@@ -915,7 +1045,12 @@ export default function AdminDashboard({
                       : 'border-transparent text-[#c3c4c7] hover:bg-[#2c3338] hover:text-[#72aee6]'
                   }`}
                 >
-                  <span className="text-sm">👥</span>
+                  <UserCog
+                    className={`w-4 h-4 shrink-0 transition-colors ${
+                      activeTab === 'users' ? 'text-white' : 'text-[#8c8f94]'
+                    }`}
+                    strokeWidth={1.75}
+                  />
                   <span>Team Users &amp; Roles</span>
                 </button>
               )}
@@ -949,6 +1084,18 @@ export default function AdminDashboard({
                   showToast('success', `Selected edition ${year}. Editing content tabs below.`);
                   setActiveTab('annual');
                 }}
+              />
+            )}
+
+            {/* ======================================================== */}
+            {/* VIEW: MAIN THEME & BRANDING (AIPC to AIL) */}
+            {/* ======================================================== */}
+            {activeTab === 'branding' && (
+              <BrandingTab
+                data={data}
+                setData={setData}
+                showToast={showToast}
+                onSaveToBackend={handleSaveToBackend}
               />
             )}
 
@@ -2209,47 +2356,130 @@ export default function AdminDashboard({
                     {/* TAB: BOOKS */}
                     {activeTab === 'books' && (
                       <div className="bg-white border border-[#c3c4c7] shadow-sm p-5 space-y-4">
-                        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-                          <h2 className="text-sm font-bold text-[#1d2327]">
-                            Complimentary Books by Year
-                          </h2>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              handleFileUpload(`book-${activeBookYear}`, (url) => {
-                                const list = data.books.booksData[activeBookYear] || [];
-                                setData({
-                                  ...data,
-                                  books: {
-                                    ...data.books,
-                                    booksData: {
-                                      ...data.books.booksData,
-                                      [activeBookYear]: [...list, { img: url }],
+                        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 pb-3">
+                          <div>
+                            <h2 className="text-sm font-bold text-[#1d2327]">
+                              Complimentary Books by Edition Year
+                            </h2>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              Manage book editions, delete obsolete years, add new conference years, and upload book covers.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBookYear(activeBookYear)}
+                              className="bg-red-50 hover:bg-red-100 text-[#d63638] border border-red-200 text-xs font-semibold px-2.5 py-1 rounded transition-colors flex items-center gap-1.5 cursor-pointer"
+                              title={`Delete year ${activeBookYear} and its books`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.75} />
+                              <span>Delete Year {activeBookYear}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                handleFileUpload(`book-${activeBookYear}`, (url) => {
+                                  const list = data.books.booksData[activeBookYear] || [];
+                                  setData({
+                                    ...data,
+                                    books: {
+                                      ...data.books,
+                                      booksData: {
+                                        ...data.books.booksData,
+                                        [activeBookYear]: [...list, { img: url }],
+                                      },
                                     },
-                                  },
-                                });
-                              })
-                            }
-                            className="bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold px-2.5 py-1"
-                          >
-                            + Upload Book Cover
-                          </button>
+                                  });
+                                })
+                              }
+                              className="bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold px-2.5 py-1 rounded flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5" strokeWidth={2} />
+                              <span>Upload Cover ({activeBookYear})</span>
+                            </button>
+                          </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-1 border-b border-[#c3c4c7] pb-2">
-                          {data.books.years.map((year: string) => (
+                        {/* Year Management Toolbar: Add Year & Delete */}
+                        <div className="bg-[#f6f7f7] border border-[#dcdcde] p-3 rounded flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-semibold text-gray-700">Add New Year:</span>
+                            <input
+                              type="text"
+                              value={newBookYearInput}
+                              onChange={(e) => setNewBookYearInput(e.target.value)}
+                              placeholder="e.g. 2032"
+                              maxLength={4}
+                              className="w-24 px-2 py-1 text-xs border border-[#8c8f94] rounded bg-white text-gray-800"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddBookYear();
+                                }
+                              }}
+                            />
                             <button
-                              key={year}
-                              onClick={() => setActiveBookYear(year)}
-                              className={`px-3 py-1 text-xs font-semibold border-b-2 ${
-                                activeBookYear === year
-                                  ? 'border-[#2271b1] text-[#2271b1] font-bold'
-                                  : 'border-transparent text-gray-600'
-                              }`}
+                              type="button"
+                              onClick={handleAddBookYear}
+                              className="bg-gray-800 hover:bg-black text-white text-xs font-semibold px-2.5 py-1 rounded cursor-pointer"
                             >
-                              {year}
+                              + Add Year
                             </button>
-                          ))}
+                          </div>
+
+                          <div className="text-xs text-gray-500">
+                            Currently showing books for edition: <strong className="text-[#2271b1] font-bold">{activeBookYear}</strong> ({ (data.books?.booksData?.[activeBookYear] || []).length } books)
+                          </div>
+                        </div>
+
+                        {/* Year Tabs with active indicator and inline quick-delete */}
+                        <div className="flex flex-wrap items-center gap-1.5 border-b border-[#c3c4c7] pb-2">
+                          {(data.books?.years || []).map((year: string) => {
+                            const isActive = activeBookYear === year;
+                            const count = (data.books?.booksData?.[year] || []).length;
+                            return (
+                              <div
+                                key={year}
+                                className={`inline-flex items-center rounded text-xs font-medium border transition-all ${
+                                  isActive
+                                    ? 'bg-[#2271b1] text-white border-[#2271b1] shadow-xs'
+                                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+                                }`}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveBookYear(year)}
+                                  className="px-2.5 py-1 font-semibold flex items-center gap-1.5 cursor-pointer"
+                                >
+                                  <span>{year}</span>
+                                  <span
+                                    className={`text-[10px] px-1 py-0.2 rounded-full ${
+                                      isActive
+                                        ? 'bg-white/20 text-white'
+                                        : 'bg-gray-100 text-gray-600'
+                                    }`}
+                                  >
+                                    {count}
+                                  </span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteBookYear(year);
+                                  }}
+                                  title={`Delete year ${year}`}
+                                  className={`px-1.5 py-1 text-[11px] cursor-pointer transition-colors border-l ${
+                                    isActive
+                                      ? 'border-white/30 text-white/80 hover:text-white hover:bg-red-600/80 rounded-r'
+                                      : 'border-gray-200 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-r'
+                                  }`}
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">

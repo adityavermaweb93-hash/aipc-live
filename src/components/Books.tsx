@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useConference } from '@/context/ConferenceContext';
 
 export default function Books() {
-  const { books } = useConference();
-  const availableYears = books.years || Object.keys(books.booksData);
+  const data = useConference();
+  const { books } = data;
+  const brandAcronym = (data.hero as any)?.mainHeading1 || (data.meta as any)?.brandAcronym || (books as any)?.brandTag || 'AIPC';
+  const availableYears = books.years || Object.keys(books.booksData || {});
   const [activeYear, setActiveYear] = useState(availableYears[0] || '2026');
-  const bookList = books.booksData[activeYear] || [];
+  const bookList = books.booksData?.[activeYear] || [];
 
   return (
     <div
@@ -47,7 +49,7 @@ export default function Books() {
                   style={{ borderRadius: 0 }}
                 >
                   <span className="text-[8px] block font-bold opacity-60 mb-0.5 uppercase tracking-widest">
-                    AIPC
+                    {brandAcronym}
                   </span>
                   <span className="text-sm sm:text-base font-bold">{year}</span>
                 </button>
