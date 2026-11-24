@@ -937,9 +937,9 @@ export default function AdminDashboard({
               {[
                 { id: 'editions', label: 'Conference Editions', Icon: Layers },
                 { id: 'branding', label: 'Brand & Theme (AIPC/AIL)', Icon: Sparkles },
-                { id: 'builder', label: 'Homepage Builder', Icon: LayoutTemplate },
                 { id: 'announcements', label: 'Announcements & Notices', Icon: Megaphone },
                 { id: 'annual', label: 'Year, Dates & Hero', Icon: Calendar },
+                { id: 'builder', label: 'Homepage Builder', Icon: LayoutTemplate },
                 { id: 'header', label: 'Header & Navigation', Icon: Compass },
                 { id: 'about', label: 'About & Highlights', Icon: Info },
                 { id: 'theme', label: 'Theme & Scripture', Icon: BookOpen },
