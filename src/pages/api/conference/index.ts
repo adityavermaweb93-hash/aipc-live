@@ -24,6 +24,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const result = await saveConferenceData(body.data);
     if (result.success) {
+      try {
+        await res.revalidate('/');
+        if (body.data.meta?.year) {
+          await res.revalidate(`/editions/${body.data.meta.year}`);
+        }
+      } catch (_) {}
       return res.status(200).json({ success: true, data: body.data });
     } else {
       return res.status(500).json({ success: false, error: result.error });

@@ -331,8 +331,9 @@ export async function duplicateEdition(
  * Format PostgreSQL edition entity into the legacy conference JSON structure
  * for backward compatibility across all existing public components
  */
-export function formatEditionToConferenceData(edition: any) {
+export function formatEditionToConferenceData(edition: any, baseData: any = null) {
   if (!edition) return null;
+  const base = baseData || {};
 
   // Group FAQs by column
   const col1 = (edition.faqs || [])
@@ -369,8 +370,19 @@ export function formatEditionToConferenceData(edition: any) {
     registerUrl: `/registration-${edition.year}`,
   }));
 
+  const brandAcronym =
+    base.meta?.brandAcronym ||
+    base.hero?.mainHeading1 ||
+    edition.title?.split(' ')[0] ||
+    'AIPC';
+
+  const brandFullName =
+    base.meta?.brandFullName ||
+    base.meta?.conferenceTitle ||
+    "All India Pastors' Conference";
+
   return {
-    sections: Array.isArray(edition.sections)
+    sections: Array.isArray(edition.sections) && edition.sections.length > 0
       ? edition.sections.map((s: any) => ({
           key: s.sectionKey,
           title: s.title || s.sectionKey,
@@ -381,29 +393,32 @@ export function formatEditionToConferenceData(edition: any) {
           mobileVisible: s.mobileVisible !== false,
           layoutVariant: s.layoutVariant || 'default',
         }))
-      : [],
+      : (base.sections || []),
     meta: {
       year: edition.year,
-      dates: edition.datesDisplay,
-      targetDate: edition.targetCountdown ? new Date(edition.targetCountdown).toISOString() : '',
+      brandAcronym,
+      brandFullName,
+      dates: edition.datesDisplay || base.meta?.dates,
+      targetDate: edition.targetCountdown ? new Date(edition.targetCountdown).toISOString() : (base.meta?.targetDate || ''),
       venueShort: `${edition.venueName}, ${edition.venueCity}`,
-      forText: 'Men who love the Church',
+      forText: base.meta?.forText || 'Men who love the Church',
       englishDisclaimer:
+        base.meta?.englishDisclaimer ||
         '*THE ALL INDIA PASTORS’ CONFERENCE IS AN ENGLISH CONFERENCE, \nSO PLEASE PLAN TO REGISTER AND ATTEND ONLY IF YOU ARE WELL-VERSED IN ENGLISH.',
     },
     header: {
-      logo: (edition as any).logoUrl || '/assets/AIPC-White-1.png',
-      navLinks: [
+      logo: base.header?.logo || (edition as any).logoUrl || '/assets/AIPC-White-1.png',
+      navLinks: base.header?.navLinks || [
         { label: 'ABOUT', href: '#about' },
         { label: 'THEME', href: '#theme' },
         { label: 'PRICING', href: '#pricing' },
         { label: 'CONTACT', href: '/contact-us' },
       ],
-      donationBtn: {
+      donationBtn: base.header?.donationBtn || {
         label: 'Donation',
         href: '/Donation',
       },
-      floatingMenu: [
+      floatingMenu: base.header?.floatingMenu || [
         { label: 'About', href: '#about' },
         { label: 'Theme', href: '#theme' },
         { label: 'Programme Schedule', href: '#schedule' },
@@ -417,56 +432,56 @@ export function formatEditionToConferenceData(edition: any) {
       ],
     },
     hero: {
-      preTitle: edition.heroPreTitle || 'Organised By Equip Indian Churches',
-      mainHeading1: 'AIPC',
+      preTitle: edition.heroPreTitle || base.hero?.preTitle || 'Organised By Equip Indian Churches',
+      mainHeading1: brandAcronym,
       mainHeading2: edition.year,
-      subtitlePre: '“',
-      subtitleHighlight: edition.themeTitle || 'Living as Exiles',
-      subtitlePost: '”',
-      description: edition.themeSubtitle || 'Expositions in 1 Peter',
-      tagline: edition.heroTagline || 'A Conference for Indian Churches by Indians.',
-      registerBtnText: 'Register Now',
+      subtitlePre: base.hero?.subtitlePre || '“',
+      subtitleHighlight: edition.themeTitle || base.hero?.subtitleHighlight || 'Living as Exiles',
+      subtitlePost: base.hero?.subtitlePost || '”',
+      description: edition.themeSubtitle || base.hero?.description || 'Expositions in 1 Peter',
+      tagline: edition.heroTagline || base.hero?.tagline || 'A Conference for Indian Churches by Indians.',
+      registerBtnText: base.hero?.registerBtnText || 'Register Now',
       registerBtnUrl: `/registration-${edition.year}`,
-      learnMoreBtnText: 'Learn More',
+      learnMoreBtnText: base.hero?.learnMoreBtnText || 'Learn More',
       learnMoreBtnUrl: '#theme',
-      bgImage: edition.heroBgImageUrl || '/assets/DSCF0834-scaled.jpg',
+      bgImage: edition.heroBgImageUrl || base.hero?.bgImage || '/assets/DSCF0834-scaled.jpg',
     },
     about: {
-      preTitle: edition.aboutPreTitle || 'A Conference for Indian Churches by Indians',
-      mainHeadingPre: 'Where Men are ',
-      mainHeadingSpan: 'Equipped',
-      mainHeadingPost: ' & Renewed',
-      p1: edition.aboutP1 || '',
-      p2: edition.aboutP2 || '',
-      secureBtnText: 'Secure Your Seat',
+      preTitle: edition.aboutPreTitle || base.about?.preTitle || 'A Conference for Indian Churches by Indians',
+      mainHeadingPre: base.about?.mainHeadingPre || 'Where Men are ',
+      mainHeadingSpan: base.about?.mainHeadingSpan || 'Equipped',
+      mainHeadingPost: base.about?.mainHeadingPost || ' & Renewed',
+      p1: edition.aboutP1 || base.about?.p1 || '',
+      p2: edition.aboutP2 || base.about?.p2 || '',
+      secureBtnText: base.about?.secureBtnText || 'Secure Your Seat',
       secureBtnUrl: `/registration-${edition.year}`,
-      stats: edition.aboutStats || [
+      stats: edition.aboutStats || base.about?.stats || [
         { number: '600+', label: 'Men' },
         { number: '25+', label: 'States' },
         { number: '3', label: 'Days' },
       ],
-      slides: edition.aboutSlides || [],
+      slides: edition.aboutSlides || base.about?.slides || [],
     },
     theme: {
       preTitle: `Conference Theme ${edition.year}`,
-      mainHeadingPre: '“',
-      mainHeadingSpan: edition.themeTitle || 'Living as Exiles',
-      mainHeadingPost: '”',
-      subtitle: edition.themeSubtitle || 'Expositions in 1 Peter',
-      quoteText: edition.themeScripture || '',
-      quoteRef: edition.themeReference || '',
-      p1: edition.themeSummary || '',
-      p2: '',
-      tags: edition.themeTags || ['Biblical Exposition', 'Exiles'],
+      mainHeadingPre: base.theme?.mainHeadingPre || '“',
+      mainHeadingSpan: edition.themeTitle || base.theme?.mainHeadingSpan || 'Living as Exiles',
+      mainHeadingPost: base.theme?.mainHeadingPost || '”',
+      subtitle: edition.themeSubtitle || base.theme?.subtitle || 'Expositions in 1 Peter',
+      quoteText: edition.themeScripture || base.theme?.quoteText || '',
+      quoteRef: edition.themeReference || base.theme?.quoteRef || '',
+      p1: edition.themeSummary || base.theme?.p1 || '',
+      p2: base.theme?.p2 || '',
+      tags: edition.themeTags || base.theme?.tags || ['Biblical Exposition', 'Exiles'],
     },
-    speakers: {
+    speakers: base.speakers || {
       preHeading: 'Speakers',
       mainHeadingItalic: 'Faithful Pastors',
       mainHeadingRest: ' From Local Churches',
       footnote:
         "*Similar to previous editions of the conference, we do not want to attract participants towards specific preachers. Rather, we invite participants who want to be challenged by God's Word, confident that the preachers are biblically qualified pastors who will handle God's precious word with care.",
     },
-    schedule: {
+    schedule: base.schedule || {
       subTitle: 'SCHEDULE',
       titlePre: 'Three Days of The \n',
       titleItalic: 'Word & Fellowship',
@@ -516,134 +531,91 @@ export function formatEditionToConferenceData(edition: any) {
       },
     },
     pricing: {
-      subTitle: 'Registration Fees',
-      mainHeadingPre: 'Choose Your ',
-      mainHeadingSpan: 'Accommodation',
-      earlyBirdNote: 'FIRST-COME-FIRST-SERVED BASIS!',
-      cards,
+      subTitle: base.pricing?.subTitle || 'Registration Fees',
+      mainHeadingPre: base.pricing?.mainHeadingPre || 'Choose Your ',
+      mainHeadingSpan: base.pricing?.mainHeadingSpan || 'Accommodation',
+      earlyBirdNote: base.pricing?.earlyBirdNote || 'FIRST-COME-FIRST-SERVED BASIS!',
+      cards: cards.length > 0 ? cards : (base.pricing?.cards || []),
       registrationNote:
+        base.pricing?.registrationNote ||
         'Registration is open only to Indian participants. \n*PLEASE REGISTER ONLY IF YOU ARE COMFORTABLE TO COMMUNICATE IN ENGLISH\nPLEASE NOTE THAT THE INEXPENSIVE QUADRUPLE SHARING SEATS WILL BE FILLED UP FIRST AND ARE AVAILABLE ON A FIRST-COME-FIRST-SERVED BASIS!',
     },
-    books: {
+    books: base.books || {
       complimentaryLabel: 'COMPLIMENTARY',
+      brandTag: brandAcronym,
       titlePre: 'Free ',
       titleItalic: 'Books',
       years: ['2026', '2024', '2023', '2022', '2021', '2020', '2019'],
-      booksData: {
-        '2026': [
-          { img: '/assets/Union-with-christ.jpg' },
-          { img: '/assets/The-compelling-Community.jpg' },
-          { img: '/assets/More-than-words.jpg' },
-          { img: '/assets/Love.jpg' },
-          { img: '/assets/esv.jpeg' },
-          { img: '/assets/image.jpg' },
-          { img: '/assets/nicene-creed.jpeg' },
-        ],
-        '2024': [
-          { img: '/assets/aipc-revelation-for-you.jpg' },
-          { img: '/assets/Revelation-The-Final-Word.jpg' },
-          { img: '/assets/The-First-and-the-Last.jpg' },
-          { img: '/assets/Dont-waste-your-life.jpg' },
-          { img: '/assets/Book_Word-Centered-Church_page-0001-1.jpg' },
-          { img: '/assets/ESV-Concise-Study-Bible.jpg' },
-        ],
-      },
+      booksData: {},
     },
     organisers: {
-      label: 'ORGANISED BY',
-      titlePre: 'Conference ',
-      titleEm: 'Organiser',
+      label: base.organisers?.label || 'ORGANISED BY',
+      titlePre: base.organisers?.titlePre || 'Conference ',
+      titleEm: base.organisers?.titleEm || 'Organiser',
       organiser: {
-        name: primaryPartner?.name || 'Equip Indian Churches',
-        logo: primaryPartner?.logoUrl || '/assets/EIC_Favicon.png',
-        description: primaryPartner?.description || '',
-        url: primaryPartner?.websiteUrl || 'https://equipindianchurches.com',
-        urlDisplay: 'equipindianchurches.com',
+        name: primaryPartner?.name || base.organisers?.organiser?.name || 'Equip Indian Churches',
+        logo: primaryPartner?.logoUrl || base.organisers?.organiser?.logo || '/assets/EIC_Favicon.png',
+        description: primaryPartner?.description || base.organisers?.organiser?.description || '',
+        url: primaryPartner?.websiteUrl || base.organisers?.organiser?.url || 'https://equipindianchurches.com',
+        urlDisplay: base.organisers?.organiser?.urlDisplay || 'equipindianchurches.com',
       },
-      partnersLabel: 'PARTNERSHIPS',
-      partnersTitlePre: 'Our ',
-      partnersTitleEm: 'Partners',
+      partnersLabel: base.organisers?.partnersLabel || 'PARTNERSHIPS',
+      partnersTitlePre: base.organisers?.partnersTitlePre || 'Our ',
+      partnersTitleEm: base.organisers?.partnersTitleEm || 'Partners',
       partnersDescription:
+        base.organisers?.partnersDescription ||
         'We are grateful to partner with ministries that share our desire to serve the church and see the Gospel faithfully proclaimed.',
-      partnersList: secondaryPartners.map((p: any) => ({
-        name: p.name,
-        logo: p.logoUrl,
-        url: p.websiteUrl,
-        urlDisplay: p.websiteUrl.replace(/^https?:\/\//, ''),
-        description: p.description,
-      })),
-      knowMoreUrl: '/partners',
+      partnersList: secondaryPartners.length > 0
+        ? secondaryPartners.map((p: any) => ({
+            name: p.name,
+            logo: p.logoUrl,
+            url: p.websiteUrl,
+            urlDisplay: (p.websiteUrl || '').replace(/^https?:\/\//, ''),
+            description: p.description,
+          }))
+        : (base.organisers?.partnersList || []),
+      knowMoreUrl: base.organisers?.knowMoreUrl || '/partners',
     },
     gallery: {
-      subtitle: 'HIGHLIGHTS',
-      titlePre: 'Glimpses of ',
-      titleSpan: 'AIPC',
-      slides: slides.length > 0 ? slides : [
-        {
-          items: [
-            { src: '/assets/Screenshot-2026-05-01-at-7.31.21-AM-scaled.png', alt: 'AIPC 1', className: 'item-1' },
-            { src: '/assets/VAL00001-scaled-2.jpg', alt: 'AIPC 2', className: 'item-2' },
-            { src: '/assets/Main-Session_Harshit-scaled-2.jpg', alt: 'AIPC 3', className: 'item-3' },
-            { src: '/assets/FTT_Mumabi.jpg', alt: 'AIPC 4', className: 'item-4' },
-            { src: '/assets/VAL00115-scaled.jpg', alt: 'AIPC 5', className: 'item-5' },
-            { src: '/assets/Singing-scaled.jpg', alt: 'AIPC 6', className: 'item-6' },
-          ],
-        },
-      ],
+      subtitle: base.gallery?.subtitle || 'HIGHLIGHTS',
+      titlePre: base.gallery?.titlePre || 'Glimpses of ',
+      titleSpan: base.gallery?.titleSpan || brandAcronym,
+      slides: slides.length > 0 ? slides : (base.gallery?.slides || []),
     },
-    venue: {
-      subTitle: 'Location',
+    venue: base.venue || {
+      preTitle: 'VENUE',
       titlePre: 'Conference ',
-      titleSpan: 'Venue',
+      titleHighlight: 'Location',
       mainCard: {
-        name: edition.venueName,
+        name: `${edition.venueName}, ${edition.venueCity}`,
+        dates: edition.datesDisplay,
         address: edition.venueAddress,
-        image: '/assets/unnamed.webp',
+        mapUrl: edition.venueMapUrl || 'https://maps.google.com',
       },
-      mapCard: {
-        title: edition.venueName,
-        subtitle: `${edition.venueCity}, ${edition.venueState || ''}`,
-        mapUrl: edition.venueMapUrl || 'https://maps.app.goo.gl/59srRmRwi4KEZCAcA',
-        linkText: 'Open in Google Maps',
-      },
-      helpCard: {
-        title: 'Need Help Getting There?',
-        description: 'Register first, and we will keep you updated for further information.',
-        btnText: 'Register & Get Updates',
-        btnUrl: `/registration-${edition.year}`,
-      },
-      transport: [
-        { mode: 'By Train', desc: `The closest railway station to the venue is in ${edition.venueCity}.`, url: '/travel-instruction' },
-        { mode: 'By Air', desc: 'The best way to reach the venue from the airport is to take a cab.', url: '/travel-instruction' },
-        { mode: 'By Cab', desc: `Uber & Ola available from stations and airport to ${edition.venueName}.`, url: '/travel-instruction' },
-      ],
+      cards: [],
     },
     faq: {
-      subTitle: "FAQ'S",
-      titlePre: 'Common ',
-      titleSpan: 'Questions',
-      column1: col1,
-      column2: col2,
-      moreFaqsUrl: '/faqs',
+      preTitle: base.faq?.preTitle || 'FAQ',
+      title: base.faq?.title || 'Frequently Asked Questions',
+      col1: col1.length > 0 ? col1 : (base.faq?.col1 || []),
+      col2: col2.length > 0 ? col2 : (base.faq?.col2 || []),
     },
-    contact: {
-      badge: 'Get in touch',
-      titlePre: 'Contact ',
-      titleSpan: 'Us',
-      formAction: 'https://formspree.io/f/info@aipc.live',
-      email: 'info@aipc.live',
-      phone: '+91 98867 69948, +91 89700 65890',
-      venueAddress: edition.venueAddress,
-      whatsappUrl: 'https://wa.me/919886769948?text=Hi%2C%20I%20want%20to%20know%20more%20about%20the%20AIPC%20and%20registration',
+    contact: base.contact || {
+      preTitle: 'CONTACT',
+      titlePre: 'Secretariat ',
+      titleSpan: 'Inquiries',
+      phone: '+91 80979 50949',
+      whatsapp: '+91 80979 50949',
+      email: 'aipc@equipindianchurches.com',
     },
-    footer: {
-      bgImage: '/assets/red-grunge.svg',
+    footer: base.footer || {
+      bgImage: '/assets/VAL00115-scaled.jpg',
       links: [
-        { label: 'FAQ’s', href: '/faqs' },
-        { label: 'Contact', href: '/contact-us' },
         { label: 'Privacy Policy', href: '/privacy-policy' },
-        { label: 'Terms and Conditions', href: '/t-c' },
+        { label: 'Terms & Conditions', href: '/t-c' },
         { label: 'Cancellations & Refunds', href: '/cancellations-refunds' },
+        { label: 'Travel Instructions', href: '/travel-instruction' },
+        { label: 'Contact Us', href: '/contact-us' },
       ],
     },
   };

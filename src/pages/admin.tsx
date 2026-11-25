@@ -50,6 +50,25 @@ import {
 } from 'lucide-react';
 import { getAdminSession, AdminUserSession } from '@/lib/session';
 
+const TAB_METADATA: Record<string, { title: string; subtitle: string }> = {
+  annual: { title: 'Year, Dates & Hero Banner', subtitle: 'Conference year, display dates, countdown target, and hero presentation' },
+  schedule: { title: 'Programme Schedule', subtitle: 'Conference daily schedules, session timings, topics, and break events' },
+  pricing: { title: 'Accommodation & Fees', subtitle: 'Room sharing packages, registration rates, amenities, and inclusions' },
+  books: { title: 'Complimentary Books', subtitle: 'Free heritage books archive by edition year, with quick year deletion and cover uploads' },
+  speakers: { title: 'Speakers Section & Statement', subtitle: 'Pastoral declaration, preaching qualifications, and keynote pastors' },
+  organisers: { title: 'Organisers & Partner Ministries', subtitle: 'Equip Indian Churches details and Gospel ministry partner logos' },
+  gallery: { title: 'Photo Gallery & Highlights', subtitle: 'Conference photography, photo grid layouts, and memorable moments' },
+  venue: { title: 'Venue Location & Travel Instructions', subtitle: 'GCC Hotel & Club address, Google Maps directions, transit guidance' },
+  faq: { title: 'Common Questions FAQ', subtitle: 'Answers for registered pastors regarding lodging, meals, travel, and language' },
+  contact: { title: 'Contact Details & WhatsApp Channel', subtitle: 'Secretariat WhatsApp support number, email inbox, and phone channels' },
+  header: { title: 'Header & Navigation Links', subtitle: 'Main menu navigation labels, target anchors, and donation button' },
+  footer: { title: 'Footer, Legal & Policy Links', subtitle: 'Copyright statement, privacy policy, and terms & conditions' },
+  about: { title: 'About & Conference Highlights', subtitle: 'Attendee attendance counters, states represented, and overview statement' },
+  theme: { title: 'Conference Theme & Scripture Reference', subtitle: 'Theological exposition title, memory verses, and central doctrine' },
+  media: { title: 'Media Library & Uploads', subtitle: 'Permanent cloud storage assets with direct CDN URLs' },
+  json: { title: 'Raw Configuration Backup', subtitle: 'Full JSON data store inspection, manual editing, and restore' },
+};
+
 interface AdminDashboardProps {
   initialData: any;
   initialRegistrations: RegistrationRecord[];
@@ -140,9 +159,22 @@ export default function AdminDashboard({
 
   // Status & Notifications
   const [isSaving, setIsSaving] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
   const [saveToast, setSaveToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [uploadedMedia, setUploadedMedia] = useState<{ name: string; url: string; time: string }[]>([]);
+
+  // Warn before closing tab if there are unsaved edits
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
   // Fetch fresh data from live backend store on mount and window focus
   useEffect(() => {
@@ -581,6 +613,7 @@ export default function AdminDashboard({
         setData(result.data);
         setJsonText(JSON.stringify(result.data, null, 2));
         setGlobalData(result.data);
+        setIsDirty(false);
 
         // Instant cross-tab sync via BroadcastChannel and localStorage
         try {
@@ -616,6 +649,7 @@ export default function AdminDashboard({
         setData(result.data);
         setJsonText(JSON.stringify(result.data, null, 2));
         setGlobalData(result.data);
+        setIsDirty(false);
         showToast('success', 'All conference data has been reset to defaults.');
       } else {
         showToast('error', `Reset failed: ${result.error}`);
@@ -1628,31 +1662,50 @@ export default function AdminDashboard({
             )}
 
             {/* ======================================================== */}
-            {/* VIEW 3: CONFERENCE SETTINGS (Two-Column WP Post Edit Style) */}
+            {/* VIEW 3: CONFERENCE SETTINGS (Full-Width Responsive Modern Edit Area) */}
             {/* ======================================================== */}
             {activeTab !== 'registrations' && activeTab !== 'queries' && (
-              <div className="space-y-4">
-                {/* Header */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#c3c4c7] pb-3">
-                  <h1 className="text-2xl font-normal text-[#1d2327]">
-                    Conference Configuration &bull; AIPC {data.meta.year}
-                  </h1>
+              <div className="space-y-4 pb-20">
+                {/* Modern Dynamic Section Header */}
+                <div className="bg-white border border-[#c3c4c7] p-4 shadow-sm flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h1 className="text-xl font-bold text-[#1d2327]">
+                        {TAB_METADATA[activeTab]?.title || `Conference ${activeTab}`}
+                      </h1>
+                      <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-blue-50 text-[#2271b1] border border-blue-200">
+                        {data.meta?.year || '2026'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {TAB_METADATA[activeTab]?.subtitle || 'Edit configuration settings below. Changes are saved dynamically.'}
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleSaveToBackend()}
                       disabled={isSaving}
-                      className="bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold py-1.5 px-4 shadow-sm"
+                      className="bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold py-1.5 px-4 shadow-sm rounded flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
-                      {isSaving ? 'Publishing...' : 'Publish Changes'}
+                      <Save className="w-3.5 h-3.5" />
+                      <span>{isSaving ? 'Publishing...' : 'Save Changes'}</span>
                     </button>
+                    <a
+                      href={`/?t=${Date.now()}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-1.5 px-3 rounded flex items-center gap-1.5 transition-colors"
+                      title="View live website with fresh cache"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">View Live Site</span>
+                    </a>
                   </div>
                 </div>
 
-                {/* Two-Column Editor Layout: Left 72% Form | Right 28% Publish Box */}
-                <div className="flex flex-col lg:flex-row gap-5 items-start">
-                  {/* Left Column (Main Form Fields) */}
-                  <div className="flex-1 w-full space-y-5">
+                {/* Full-width spacious content container */}
+                <div className="w-full space-y-5">
                     {/* TAB: ANNUAL & HERO */}
                     {activeTab === 'annual' && (
                       <div className="bg-white border border-[#c3c4c7] shadow-sm p-5 space-y-5">
@@ -2710,65 +2763,63 @@ export default function AdminDashboard({
                       </div>
                     )}
                   </div>
-
-                  {/* Right Column: WordPress "Publish / Meta Box" (28% Width) */}
-                  <div className="w-full lg:w-72 shrink-0 space-y-4">
-                    {/* Publish Box */}
-                    <div className="bg-white border border-[#c3c4c7] shadow-sm">
-                      <div className="p-3 border-b border-[#c3c4c7] font-bold text-xs text-[#1d2327] bg-[#f6f7f7]">
-                        Publish
-                      </div>
-                      <div className="p-3.5 space-y-2.5 text-xs text-[#646970]">
-                        <div className="flex items-center justify-between">
-                          <span>Status:</span>
-                          <strong className="text-[#00a32a]">Live Published</strong>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Active Edition:</span>
-                          <strong className="text-gray-900">{data.meta.year}</strong>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Host City:</span>
-                          <strong className="text-gray-900">{data.venue.mapCard.subtitle}</strong>
-                        </div>
-                        <div className="pt-2 border-t border-gray-200 flex items-center justify-between">
-                          <Link href="/" target="_blank" className="text-[#2271b1] hover:underline">
-                            Preview Site ↗
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => handleSaveToBackend()}
-                            disabled={isSaving}
-                            className="bg-[#2271b1] hover:bg-[#135e96] text-white text-xs font-semibold py-1.5 px-3.5 shadow-sm"
-                          >
-                            {isSaving ? 'Updating...' : 'Update'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Annual Edition Quick Switcher Box */}
-                    <div className="bg-white border border-[#c3c4c7] shadow-sm">
-                      <div className="p-3 border-b border-[#c3c4c7] font-bold text-xs text-[#1d2327] bg-[#f6f7f7]">
-                        Annual Transition
-                      </div>
-                      <div className="p-3.5 text-xs text-[#646970] space-y-3">
-                        <p>
-                          Move conference to next calendar year and new city across all public pages in 1 click.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={handleStartNextYearEdition}
-                          className="w-full bg-[#dba617] hover:bg-[#c29314] text-black text-xs font-bold py-1.5 px-3 shadow-sm"
-                        >
-                          ⚡ Prepare Next Year ({parseInt(data.meta.year || '2026', 10) + 1})
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
+              )}
+
+            {/* ======================================================== */}
+            {/* UNIVERSAL DYNAMIC FLOATING ACTION BAR */}
+            {/* ======================================================== */}
+            <div className="fixed bottom-4 right-4 z-40 flex items-center gap-3 bg-[#1d2327]/95 backdrop-blur-md text-white py-2 px-3.5 rounded-xl shadow-2xl border border-white/10 transition-all duration-300">
+              <div className="flex items-center gap-2 text-xs">
+                <span
+                  className={`w-2.5 h-2.5 rounded-full ${
+                    isDirty ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'
+                  }`}
+                />
+                <span className="font-medium text-gray-300 hidden sm:inline">
+                  {isDirty ? 'Unsaved changes' : 'Live Sync Active'}
+                </span>
               </div>
-            )}
+
+              <div className="h-4 w-[1px] bg-white/20" />
+
+              <button
+                type="button"
+                onClick={() => handleSaveToBackend()}
+                disabled={isSaving}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-sm ${
+                  isDirty
+                    ? 'bg-[#2271b1] hover:bg-[#135e96] text-white shadow-blue-500/30'
+                    : 'bg-white/10 hover:bg-white/20 text-white'
+                }`}
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-3.5 h-3.5" />
+                    <span>Save &amp; Publish</span>
+                  </>
+                )}
+              </button>
+
+              <a
+                href={`/?t=${Date.now()}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white/10 hover:bg-white/20 text-white flex items-center gap-1.5 transition-colors"
+                title="View Live Public Website with cache-busting"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">View Live</span>
+              </a>
+            </div>
           </main>
         </div>
 

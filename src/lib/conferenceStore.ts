@@ -31,16 +31,43 @@ export async function getConferenceData(forceFresh = false): Promise<any> {
     return inMemoryData;
   }
 
+  // Retrieve latest baseline state from in-memory, /tmp, or Vercel Blob
+  let baseState = inMemoryData;
+  if (!baseState) {
+    try {
+      if (fs.existsSync(TMP_FILE)) {
+        baseState = JSON.parse(fs.readFileSync(TMP_FILE, 'utf-8'));
+      }
+    } catch (_) {}
+  }
+  if (!baseState) {
+    try {
+      const res = await fetch(`${BLOB_URL}?t=${now}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store' },
+      });
+      if (res.ok) {
+        const live = await res.json();
+        if (live && live.meta) baseState = live;
+      }
+    } catch (_) {}
+  }
+  if (!baseState) {
+    try {
+      if (fs.existsSync(DATA_FILE)) {
+        baseState = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+      }
+    } catch (_) {}
+  }
+  if (!baseState) baseState = defaultData;
+
   // 1. Primary Store: PostgreSQL via Prisma (multi-edition active published edition)
   if (process.env.DATABASE_URL) {
     try {
       const activeEdition = await getActiveEdition();
       if (activeEdition) {
-        const formatted = formatEditionToConferenceData(activeEdition);
+        const formatted = formatEditionToConferenceData(activeEdition, baseState);
         if (formatted) {
-          if (inMemoryData?.header?.logo) {
-            formatted.header = { ...formatted.header, ...inMemoryData.header };
-          }
           inMemoryData = formatted;
           lastFetchTime = now;
           try {
@@ -50,55 +77,14 @@ export async function getConferenceData(forceFresh = false): Promise<any> {
         }
       }
     } catch (dbErr) {
-      console.error('PostgreSQL fetch error, falling through to Blob store:', dbErr);
+      console.error('PostgreSQL fetch error, falling through to Blob/base store:', dbErr);
     }
   }
 
-  // 2. Secondary Store: Vercel Blob
-  try {
-    const res = await fetch(`${BLOB_URL}?t=${now}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store' },
-    });
-    if (res.ok) {
-      const liveData = await res.json();
-      if (liveData && typeof liveData === 'object' && liveData.meta) {
-        inMemoryData = liveData;
-        lastFetchTime = now;
-        try {
-          fs.writeFileSync(TMP_FILE, JSON.stringify(liveData, null, 2), 'utf-8');
-        } catch (_) {}
-        return liveData;
-      }
-    }
-  } catch (blobErr) {}
-
-  // 3. In-memory fallback
-  if (inMemoryData) {
-    return inMemoryData;
-  }
-
-  // 4. /tmp fallback
-  try {
-    if (fs.existsSync(TMP_FILE)) {
-      const content = fs.readFileSync(TMP_FILE, 'utf-8');
-      inMemoryData = JSON.parse(content);
-      lastFetchTime = now;
-      return inMemoryData;
-    }
-  } catch (err) {}
-
-  // 5. Bundled file fallback
-  try {
-    if (fs.existsSync(DATA_FILE)) {
-      const content = fs.readFileSync(DATA_FILE, 'utf-8');
-      inMemoryData = JSON.parse(content);
-      lastFetchTime = now;
-      return inMemoryData;
-    }
-  } catch (err) {}
-
-  return defaultData;
+  // 2. Return baseState if PostgreSQL was not used
+  inMemoryData = baseState;
+  lastFetchTime = now;
+  return baseState;
 }
 
 /**
